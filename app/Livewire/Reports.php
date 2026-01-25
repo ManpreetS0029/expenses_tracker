@@ -2,7 +2,9 @@
 
 namespace App\Livewire;
 
+use App\Models\Credit;
 use App\Models\Expense;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Lazy;
@@ -35,57 +37,91 @@ class Reports extends Component
         $this->resetPage();
     }
 
-    public function exportToCsv()
+    protected function applySearch($query): void
     {
-        $query = Expense::where('user_id', Auth::id());
-
-        // Apply Search
-        if ($this->search) {
-            $query->where(function ($q) {
-                $q->where('description', 'like', '%'.$this->search.'%')
-                    ->orWhereHas('category', function ($catQ) {
-                        $catQ->where('name', 'like', '%'.$this->search.'%');
-                    });
-            });
+        if (! $this->search) {
+            return;
         }
+        $query->where(function ($q) {
+            $q->where('description', 'like', '%'.$this->search.'%')
+                ->orWhereHas('category', function ($catQ) {
+                    $catQ->where('name', 'like', '%'.$this->search.'%');
+                });
+        });
+    }
 
-        // Apply Date Filters
+    protected function applyDateFilters($query): void
+    {
         if ($this->yearFilter) {
             $query->whereYear('date', $this->yearFilter);
         }
         if ($this->monthFilter) {
             $query->whereMonth('date', $this->monthFilter);
         }
+    }
 
-        $expenses = $query->orderBy('date', 'desc')->with('category:id,name')->get();
+    public function exportToCsv()
+    {
+        $userId = Auth::id();
 
-        $filename = 'expenses_report_'.date('Y-m-d_His').'.csv';
+        $expenseQuery = Expense::where('user_id', $userId)->where('type', 'debit')->with('category:id,name');
+        $this->applySearch($expenseQuery);
+        $this->applyDateFilters($expenseQuery);
+        $expenses = $expenseQuery->orderBy('date', 'desc')->orderBy('id', 'desc')->get();
+
+        $creditQuery = Credit::where('user_id', $userId)->with('category:id,name');
+        $this->applySearch($creditQuery);
+        $this->applyDateFilters($creditQuery);
+        $credits = $creditQuery->orderBy('date', 'desc')->orderBy('id', 'desc')->get();
+
+        $rows = collect();
+        foreach ($expenses as $e) {
+            $rows->push((object) [
+                'date' => $e->date,
+                'description' => $e->description ?? 'No description',
+                'category' => $e->category->name ?? 'Unknown',
+                'classification' => $e->classification ?? '-',
+                'type' => 'Debit',
+                'amount' => $e->amount,
+                'symbol' => $e->currency_symbol ?? '₹',
+                'sort_at' => $e->created_at->format('Y-m-d H:i:s'),
+            ]);
+        }
+        foreach ($credits as $c) {
+            $rows->push((object) [
+                'date' => $c->date,
+                'description' => $c->description ?? 'No description',
+                'category' => $c->category->name ?? 'Unknown',
+                'classification' => '-',
+                'type' => 'Credit',
+                'amount' => $c->amount,
+                'symbol' => $c->currency_symbol ?? '₹',
+                'sort_at' => $c->created_at->format('Y-m-d H:i:s'),
+            ]);
+        }
+        $rows = $rows->sortByDesc('sort_at')->values();
+
+        $filename = 'transactions_report_'.date('Y-m-d_His').'.csv';
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"$filename\"",
         ];
 
-        $callback = function () use ($expenses) {
+        $callback = function () use ($rows) {
             $file = fopen('php://output', 'w');
-
-            // Add BOM for proper Excel UTF-8 handling
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            fputcsv($file, ['Date', 'Description', 'Category', 'Classification', 'Type', 'Amount']);
 
-            // Add CSV headers
-            fputcsv($file, ['Date', 'Description', 'Category', 'Classification', 'Type', 'Amount (₹)']);
-
-            // Add data rows
-            foreach ($expenses as $expense) {
+            foreach ($rows as $r) {
                 fputcsv($file, [
-                    $expense->date->format('Y-m-d'),
-                    $expense->description ?: 'No description',
-                    $expense->category->name ?? 'Unknown',
-                    $expense->classification ?? '-',
-                    ucfirst($expense->type),
-                    number_format($expense->amount, 2, '.', ''),
+                    $r->date->format('Y-m-d'),
+                    $r->description,
+                    $r->category,
+                    $r->classification,
+                    $r->type,
+                    $r->symbol.number_format($r->amount, 2, '.', ''),
                 ]);
             }
-
             fclose($file);
         };
 
@@ -105,50 +141,75 @@ class Reports extends Component
 
     public function render()
     {
-        $query = Expense::where('user_id', Auth::id());
+        $userId = Auth::id();
 
-        // Apply Search
-        if ($this->search) {
-            $query->where(function ($q) {
-                $q->where('description', 'like', '%'.$this->search.'%')
-                    ->orWhereHas('category', function ($catQ) {
-                        $catQ->where('name', 'like', '%'.$this->search.'%');
-                    });
-            });
-        }
+        $expenseQuery = Expense::where('user_id', $userId)->where('type', 'debit')->with('category:id,name');
+        $this->applySearch($expenseQuery);
+        $this->applyDateFilters($expenseQuery);
 
-        // Apply Date Filters
-        if ($this->yearFilter) {
-            $query->whereYear('date', $this->yearFilter);
-        }
-        if ($this->monthFilter) {
-            $query->whereMonth('date', $this->monthFilter);
-        }
+        $creditQuery = Credit::where('user_id', $userId)->with('category:id,name');
+        $this->applySearch($creditQuery);
+        $this->applyDateFilters($creditQuery);
 
-        // Get Available Years for Filter
-        $years = Expense::where('user_id', Auth::id())
-            ->selectRaw("strftime('%Y', date) as year")
-            ->distinct()
-            ->orderBy('year', 'desc')
-            ->pluck('year');
+        $totalDebit = (float) (clone $expenseQuery)->sum('amount');
+        $totalCredit = (float) (clone $creditQuery)->sum('amount');
 
-        // Clone query for totals calculation (we need all records, not just paginated page)
-        $allExpenses = $query->clone()->get();
-
-        // Calculate Totals form all matching records
-        $totalDebit = $allExpenses->where('type', 'debit')->sum('amount');
-        $totalCredit = $allExpenses->where('type', 'credit')->sum('amount');
-
-        // breakdown by classification
-        $needs = $allExpenses->where('type', 'debit')->where('classification', 'Needs')->sum('amount');
-        $wants = $allExpenses->where('type', 'debit')->where('classification', 'Wants')->sum('amount');
-        $savings = $allExpenses->where('type', 'debit')->where('classification', 'Savings')->sum('amount');
-        $investments = $allExpenses->where('type', 'debit')->where('classification', 'Investments')->sum('amount');
-
+        $allExpenses = (clone $expenseQuery)->get();
+        $needs = $allExpenses->where('classification', 'Needs')->sum('amount');
+        $wants = $allExpenses->where('classification', 'Wants')->sum('amount');
+        $savings = $allExpenses->where('classification', 'Savings')->sum('amount');
+        $investments = $allExpenses->where('classification', 'Investments')->sum('amount');
         $unclassified = $totalDebit - ($needs + $wants + $savings + $investments);
 
-        // Get Paginated Expenses for Listing
-        $expenses = $query->orderBy('date', 'desc')->paginate(10);
+        $expenses = $expenseQuery->orderBy('date', 'desc')->orderBy('id', 'desc')->get();
+        $credits = $creditQuery->orderBy('date', 'desc')->orderBy('id', 'desc')->get();
+
+        $allRows = collect();
+        foreach ($expenses as $e) {
+            $allRows->push((object) [
+                'date' => $e->date,
+                'description' => $e->description ?? 'No description',
+                'category_name' => $e->category->name ?? 'Unknown',
+                'classification' => $e->classification,
+                'type' => 'debit',
+                'amount' => (float) $e->amount,
+                'currency_symbol' => $e->currency_symbol ?? '₹',
+                'sort_at' => $e->created_at->format('Y-m-d H:i:s'),
+            ]);
+        }
+        foreach ($credits as $c) {
+            $allRows->push((object) [
+                'date' => $c->date,
+                'description' => $c->description ?? 'No description',
+                'category_name' => $c->category->name ?? 'Unknown',
+                'classification' => null,
+                'type' => 'credit',
+                'amount' => (float) $c->amount,
+                'currency_symbol' => $c->currency_symbol ?? '₹',
+                'sort_at' => $c->created_at->format('Y-m-d H:i:s'),
+            ]);
+        }
+        $allRows = $allRows->sortByDesc('sort_at')->values();
+
+        $page = max(1, (int) request()->get('page', 1));
+        $perPage = 10;
+        $transactions = new LengthAwarePaginator(
+            $allRows->forPage($page, $perPage)->values(),
+            $allRows->count(),
+            $perPage,
+            $page,
+            ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath(), 'query' => request()->query()]
+        );
+
+        $expenseYears = Expense::where('user_id', $userId)
+            ->selectRaw("strftime('%Y', date) as year")
+            ->distinct()
+            ->pluck('year');
+        $creditYears = Credit::where('user_id', $userId)
+            ->selectRaw("strftime('%Y', date) as year")
+            ->distinct()
+            ->pluck('year');
+        $years = $expenseYears->merge($creditYears)->unique()->sortDesc()->values();
 
         return view('livewire.reports', [
             'years' => $years,
@@ -159,7 +220,7 @@ class Reports extends Component
             'savings' => $savings,
             'investments' => $investments,
             'unclassified' => $unclassified,
-            'expenses' => $expenses,
+            'transactions' => $transactions,
         ]);
     }
 }

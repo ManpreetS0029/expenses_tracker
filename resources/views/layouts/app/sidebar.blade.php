@@ -51,6 +51,17 @@
                     {{ __('Expenses') }}
                 </flux:sidebar.item>
 
+                <flux:sidebar.item :href="route('credits')" :current="request()->routeIs('credits')" wire:navigate>
+                    <x-slot:icon>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M2.25 18 9 11.25l4.306 4.307a11.95 11.95 0 0 1 5.814-5.519l2.74-1.22m0 0-5.94-2.28m5.94 2.28-2.28 5.941" />
+                        </svg>
+                    </x-slot:icon>
+                    {{ __('Credits') }}
+                </flux:sidebar.item>
+
                 <flux:sidebar.item :href="route('monthly-targets')" :current="request()->routeIs('monthly-targets')"
                     wire:navigate>
                     <x-slot:icon>
@@ -95,16 +106,8 @@
     </flux:sidebar>
 
 
-    <flux:header class="lg:hidden">
-        <flux:sidebar.toggle class="lg:hidden" inset="left">
-            <x-slot:icon>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                    stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                </svg>
-            </x-slot:icon>
-        </flux:sidebar.toggle>
+    <flux:header class="lg:hidden z-50 sticky top-0">
+        <flux:sidebar.toggle class="lg:hidden !flex" inset="left" icon="bars-2" />
 
         <flux:spacer />
 

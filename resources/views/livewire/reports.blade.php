@@ -87,23 +87,23 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-zinc-700">
-                    @forelse($expenses as $expense)
+                    @forelse($transactions as $tx)
                         <tr class="hover:bg-gray-50 dark:hover:bg-zinc-700/50 transition">
-                            <td class="px-6 py-4 whitespace-nowrap">{{ $expense->date->format('M d, Y') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">{{ $tx->date->format('M d, Y') }}</td>
                             <td class="px-6 py-4">
-                                <div class="font-medium text-gray-900 dark:text-white">{{ $expense->description ?: 'No description' }}</div>
-                                @if($expense->type === 'debit' && $expense->classification)
-                                    <span class="text-xs text-gray-500">{{ $expense->classification }}</span>
+                                <div class="font-medium text-gray-900 dark:text-white">{{ $tx->description }}</div>
+                                @if($tx->type === 'debit' && $tx->classification)
+                                    <span class="text-xs text-gray-500">{{ $tx->classification }}</span>
                                 @endif
                             </td>
-                            <td class="px-6 py-4">{{ $expense->category->name }}</td>
+                            <td class="px-6 py-4">{{ $tx->category_name }}</td>
                             <td class="px-6 py-4">
-                                <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium {{ $expense->type === 'credit' ? 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20 dark:bg-green-900/20 dark:text-green-400 dark:ring-green-500/20' : 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20 dark:bg-red-900/20 dark:text-red-400 dark:ring-red-500/20' }}">
-                                    {{ ucfirst($expense->type) }}
+                                <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium {{ $tx->type === 'credit' ? 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20 dark:bg-green-900/20 dark:text-green-400 dark:ring-green-500/20' : 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20 dark:bg-red-900/20 dark:text-red-400 dark:ring-red-500/20' }}">
+                                    {{ ucfirst($tx->type) }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 text-right font-medium {{ $expense->type === 'credit' ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-white' }}">
-                                {{ $expense->type === 'credit' ? '+' : '-' }}₹{{ number_format($expense->amount, 2) }}
+                            <td class="px-6 py-4 text-right font-medium {{ $tx->type === 'credit' ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-white' }}">
+                                {{ $tx->type === 'credit' ? '+' : '-' }}{{ $tx->currency_symbol }}{{ number_format($tx->amount, 2) }}
                             </td>
                         </tr>
                     @empty
@@ -117,7 +117,7 @@
             </table>
         </div>
         <div class="px-6 py-4 border-t border-gray-200 dark:border-zinc-700">
-            {{ $expenses->links() }}
+            {{ $transactions->links() }}
         </div>
     </div>
     
@@ -127,7 +127,27 @@
                 charts: {},
                 
                 init() {
-                    this.renderCharts();
+                    // Wait for Chart.js to be fully loaded
+                    if (typeof Chart === 'undefined') {
+                        const checkChart = setInterval(() => {
+                            if (typeof Chart !== 'undefined') {
+                                clearInterval(checkChart);
+                                this.renderCharts();
+                            }
+                        }, 100);
+                    } else {
+                        this.renderCharts();
+                    }
+                    
+                    // Handle window resize for mobile
+                    let resizeTimer;
+                    window.addEventListener('resize', () => {
+                        clearTimeout(resizeTimer);
+                        resizeTimer = setTimeout(() => {
+                            this.destroyCharts();
+                            this.renderCharts();
+                        }, 250);
+                    });
                     
                     // Re-render charts on Livewire updates (pagination, filters, etc.)
                     Livewire.hook('commit', () => {
@@ -153,6 +173,18 @@
                     const ctxBar = document.getElementById('incomeVsExpenseChart');
 
                     if (!ctxPie || !ctxBar) return;
+                    
+                    // Ensure canvas containers have proper dimensions
+                    const pieContainer = ctxPie.parentElement;
+                    const barContainer = ctxBar.parentElement;
+                    if (pieContainer) {
+                        pieContainer.style.width = '100%';
+                        pieContainer.style.height = window.innerWidth < 768 ? '300px' : '400px';
+                    }
+                    if (barContainer) {
+                        barContainer.style.width = '100%';
+                        barContainer.style.height = window.innerWidth < 768 ? '300px' : '400px';
+                    }
 
                     // Data from Livewire
                     const needs = {{ $needs }};
@@ -191,13 +223,16 @@
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
+                            layout: {
+                                padding: window.innerWidth < 768 ? 5 : 10
+                            },
                             plugins: {
                                 legend: { 
-                                    position: 'right', 
+                                    position: window.innerWidth < 768 ? 'bottom' : 'right', 
                                     labels: { 
                                         color: textColor,
-                                        padding: 12,
-                                        font: { size: 12 }
+                                        padding: window.innerWidth < 768 ? 8 : 12,
+                                        font: { size: window.innerWidth < 768 ? 10 : 12 }
                                     } 
                                 },
                                 tooltip: {
@@ -234,6 +269,9 @@
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
+                            layout: {
+                                padding: window.innerWidth < 768 ? 5 : 10
+                            },
                             plugins: {
                                 legend: { display: false },
                                 tooltip: {
@@ -253,12 +291,16 @@
                                     grid: { color: gridColor },
                                     ticks: { 
                                         color: textColor,
+                                        font: { size: window.innerWidth < 768 ? 10 : 12 },
                                         callback: (value) => '₹' + value.toLocaleString()
                                     }
                                 },
                                 x: {
                                     grid: { display: false },
-                                    ticks: { color: textColor }
+                                    ticks: { 
+                                        color: textColor,
+                                        font: { size: window.innerWidth < 768 ? 10 : 12 }
+                                    }
                                 }
                             }
                         }

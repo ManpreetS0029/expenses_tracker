@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\Credit;
 use App\Models\Expense;
 use App\Models\MonthlyTarget;
 use Carbon\Carbon;
@@ -61,8 +62,12 @@ class Dashboard extends Component
             ->where('month', '<=', $endOfMonth->toDateString())
             ->first();
 
-        // Monthly Income
-        $monthlyIncome = $monthlyTarget ? $monthlyTarget->total_income : 0;
+        // Monthly Income (Monthly Target + Credits for the month)
+        $monthlyTargetIncome = $monthlyTarget ? (float) $monthlyTarget->total_income : 0;
+        $monthlyCredits = (float) Credit::where('user_id', $userId)
+            ->whereBetween('date', [$startOfMonth, $endOfMonth])
+            ->sum('amount');
+        $monthlyIncome = $monthlyTargetIncome + $monthlyCredits;
 
         // Monthly Expenses
         $monthlyExpenses = Expense::where('user_id', $userId)
@@ -73,10 +78,10 @@ class Dashboard extends Component
         // Monthly Savings
         $monthlySavings = $monthlyIncome - $monthlyExpenses;
 
-        // Lifetime Balance
-        $totalIncome = MonthlyTarget::where('user_id', $userId)->sum('total_income');
-        $totalCredits = Expense::where('user_id', $userId)->where('type', 'credit')->sum('amount');
-        $totalDebits = Expense::where('user_id', $userId)->where('type', 'debit')->sum('amount');
+        // Lifetime Balance (Total Income = MonthlyTarget + Credits; Total Debits = Expenses)
+        $totalIncome = (float) MonthlyTarget::where('user_id', $userId)->sum('total_income');
+        $totalCredits = (float) Credit::where('user_id', $userId)->sum('amount');
+        $totalDebits = (float) Expense::where('user_id', $userId)->where('type', 'debit')->sum('amount');
         $lifetimeBalance = ($totalIncome + $totalCredits) - $totalDebits;
 
         // Average Daily Spending
@@ -121,9 +126,12 @@ class Dashboard extends Component
             $monthEnd = $month->copy()->endOfMonth();
             $trendLabels[] = $month->format('M Y');
 
-            $income = MonthlyTarget::where('user_id', $userId)
+            $income = (float) MonthlyTarget::where('user_id', $userId)
                 ->whereBetween('month', [$monthStart, $monthEnd])
                 ->sum('total_income');
+            $income += (float) Credit::where('user_id', $userId)
+                ->whereBetween('date', [$monthStart, $monthEnd])
+                ->sum('amount');
 
             $expenses = Expense::where('user_id', $userId)
                 ->whereBetween('date', [$monthStart, $monthEnd])
@@ -217,19 +225,55 @@ class Dashboard extends Component
             ];
         }
 
-        // Recent Transactions
-        $recentExpenses = Expense::where('user_id', $userId)
+        // Recent Transactions (expenses + credits, sorted by date desc, latest first)
+        $expensesForRecent = Expense::where('user_id', $userId)
+            ->where('type', 'debit')
             ->with('category:id,name')
             ->orderBy('date', 'desc')
-            ->limit(8)
+            ->orderBy('id', 'desc')
+            ->limit(20)
             ->get();
 
-        // Get available years for filter
-        $availableYears = Expense::where('user_id', $userId)
+        $creditsForRecent = Credit::where('user_id', $userId)
+            ->with('category:id,name')
+            ->orderBy('date', 'desc')
+            ->orderBy('id', 'desc')
+            ->limit(20)
+            ->get();
+
+        $recentTransactions = collect()
+            ->merge($expensesForRecent->map(fn ($e) => (object) [
+                'date' => $e->date,
+                'description' => $e->description ?? 'No description',
+                'category_name' => $e->category->name ?? 'Unknown',
+                'type' => 'debit',
+                'amount' => (float) $e->amount,
+                'currency_symbol' => $e->currency_symbol ?? '₹',
+                'sort_at' => $e->created_at->format('Y-m-d H:i:s'),
+            ]))
+            ->merge($creditsForRecent->map(fn ($c) => (object) [
+                'date' => $c->date,
+                'description' => $c->description ?? 'No description',
+                'category_name' => $c->category->name ?? 'Unknown',
+                'type' => 'credit',
+                'amount' => (float) $c->amount,
+                'currency_symbol' => $c->currency_symbol ?? '₹',
+                'sort_at' => $c->created_at->format('Y-m-d H:i:s'),
+            ]))
+            ->sortByDesc('sort_at')
+            ->take(8)
+            ->values();
+
+        // Get available years for filter (from both expenses and credits)
+        $expenseYears = Expense::where('user_id', $userId)
             ->selectRaw("strftime('%Y', date) as year")
             ->distinct()
-            ->orderBy('year', 'desc')
             ->pluck('year');
+        $creditYears = Credit::where('user_id', $userId)
+            ->selectRaw("strftime('%Y', date) as year")
+            ->distinct()
+            ->pluck('year');
+        $availableYears = $expenseYears->merge($creditYears)->unique()->sortDesc()->values();
 
         $this->dispatch('init-charts');
 
@@ -253,7 +297,7 @@ class Dashboard extends Component
             'weekdayLabels' => $weekdayLabels,
             'weekdayData' => array_map('floatval', $weekdayData),
             'classificationBudgets' => $classificationBudgets,
-            'recentExpenses' => $recentExpenses,
+            'recentTransactions' => $recentTransactions,
             'currentMonth' => $now->format('F Y'),
             'availableYears' => $availableYears,
         ]);

@@ -43,16 +43,31 @@
         const installBtn = document.getElementById('pwa-install-btn');
         if (installBtn) {
             installBtn.style.display = 'block';
-            installBtn.addEventListener('click', () => {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('User accepted the install prompt');
+            const button = installBtn.querySelector('button');
+            if (button) {
+                button.addEventListener('click', () => {
+                    if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        deferredPrompt.userChoice.then((choiceResult) => {
+                            if (choiceResult.outcome === 'accepted') {
+                                console.log('User accepted the install prompt');
+                            }
+                            deferredPrompt = null;
+                            installBtn.style.display = 'none';
+                        });
                     }
-                    deferredPrompt = null;
-                    installBtn.style.display = 'none';
                 });
-            });
+            }
         }
+    });
+    
+    // Check if app is already installed
+    window.addEventListener('appinstalled', () => {
+        console.log('PWA was installed');
+        const installBtn = document.getElementById('pwa-install-btn');
+        if (installBtn) {
+            installBtn.style.display = 'none';
+        }
+        deferredPrompt = null;
     });
 </script>

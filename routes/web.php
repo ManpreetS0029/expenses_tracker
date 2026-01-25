@@ -24,6 +24,12 @@ Route::get('expenses', Expenses::class)
     ->middleware(['auth', 'verified'])
     ->name('expenses');
 
+use App\Livewire\Credits;
+
+Route::get('credits', Credits::class)
+    ->middleware(['auth', 'verified'])
+    ->name('credits');
+
 use App\Livewire\MonthlyTargets;
 
 Route::get('monthly-targets', MonthlyTargets::class)

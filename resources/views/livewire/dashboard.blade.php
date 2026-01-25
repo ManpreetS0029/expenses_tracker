@@ -311,10 +311,16 @@
         class="bg-white dark:bg-neutral-800/90 p-6 rounded-2xl border border-neutral-200 dark:border-neutral-600 shadow-sm dark:shadow-lg dark:shadow-black/10">
         <div class="flex items-center justify-between mb-5">
             <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Recent Transactions</h3>
-            <a href="{{ route('expenses') }}"
-                class="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">
-                View All →
-            </a>
+            <div class="flex gap-3">
+                <a href="{{ route('expenses') }}"
+                    class="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">
+                    Expenses →
+                </a>
+                <a href="{{ route('credits') }}"
+                    class="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">
+                    Credits →
+                </a>
+            </div>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full">
@@ -328,27 +334,27 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-neutral-100 dark:divide-neutral-700">
-                    @forelse($recentExpenses as $expense)
+                    @forelse($recentTransactions as $tx)
                         <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors">
                             <td class="py-3 text-sm text-neutral-600 dark:text-neutral-400">
-                                {{ Carbon\Carbon::parse($expense->date)->format('M d, Y') }}
+                                {{ $tx->date->format('M d, Y') }}
                             </td>
                             <td class="py-3 text-sm text-neutral-900 dark:text-white font-medium">
-                                {{ $expense->description ?? 'No description' }}
+                                {{ $tx->description }}
                             </td>
                             <td class="py-3 text-sm text-neutral-600 dark:text-neutral-400">
-                                {{ $expense->category->name ?? 'Unknown' }}
+                                {{ $tx->category_name }}
                             </td>
                             <td class="py-3">
                                 <span
                                     class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                    {{ $expense->type === 'credit' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' }}">
-                                    {{ ucfirst($expense->type) }}
+                                    {{ $tx->type === 'credit' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' }}">
+                                    {{ ucfirst($tx->type) }}
                                 </span>
                             </td>
                             <td class="py-3 text-sm font-bold text-right 
-                                {{ $expense->type === 'credit' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
-                                {{ $expense->type === 'credit' ? '+' : '-' }}₹{{ number_format($expense->amount, 2) }}
+                                {{ $tx->type === 'credit' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
+                                {{ $tx->type === 'credit' ? '+' : '-' }}{{ $tx->currency_symbol }}{{ number_format($tx->amount, 2) }}
                             </td>
                         </tr>
                     @empty
@@ -369,7 +375,27 @@
                 charts: {},
                 
                 init() {
-                    this.initCharts();
+                    // Wait for Chart.js to be fully loaded
+                    if (typeof Chart === 'undefined') {
+                        const checkChart = setInterval(() => {
+                            if (typeof Chart !== 'undefined') {
+                                clearInterval(checkChart);
+                                this.initCharts();
+                            }
+                        }, 100);
+                    } else {
+                        this.initCharts();
+                    }
+                    
+                    // Handle window resize for mobile
+                    let resizeTimer;
+                    window.addEventListener('resize', () => {
+                        clearTimeout(resizeTimer);
+                        resizeTimer = setTimeout(() => {
+                            this.destroyCharts();
+                            this.initCharts();
+                        }, 250);
+                    });
                     
                     Livewire.on('init-charts', () => {
                         this.destroyCharts();
@@ -396,6 +422,13 @@
                         return;
                     }
                     
+                    // Wait for DOM to be ready and ensure canvas elements exist
+                    this.$nextTick(() => {
+                        this.createCharts();
+                    });
+                },
+                
+                createCharts() {
                     const isDark = document.documentElement.classList.contains('dark');
                     const textColor = isDark ? '#d1d5db' : '#737373';
                     const gridColor = isDark ? '#3f3f46' : '#e5e5e5';
@@ -403,10 +436,19 @@
                     
                     Chart.defaults.color = textColor;
                     Chart.defaults.font.family = 'inherit';
+                    Chart.defaults.responsive = true;
+                    Chart.defaults.maintainAspectRatio = false;
                     
                     // Trend Chart
                     const trendCtx = document.getElementById('trendChart');
                     if (trendCtx) {
+                        // Ensure canvas has proper dimensions
+                        const trendContainer = trendCtx.parentElement;
+                        if (trendContainer) {
+                            trendContainer.style.width = '100%';
+                            trendContainer.style.height = '320px';
+                        }
+                        
                         this.charts.trend = new Chart(trendCtx, {
                             type: 'line',
                             data: {
@@ -418,8 +460,8 @@
                                     backgroundColor: 'rgba(16, 185, 129, 0.1)',
                                     fill: true,
                                     tension: 0.4,
-                                    pointRadius: 4,
-                                    pointHoverRadius: 6
+                                    pointRadius: window.innerWidth < 768 ? 3 : 4,
+                                    pointHoverRadius: window.innerWidth < 768 ? 5 : 6
                                 }, {
                                     label: 'Expenses',
                                     data: @json($trendExpenses),
@@ -427,14 +469,17 @@
                                     backgroundColor: 'rgba(239, 68, 68, 0.1)',
                                     fill: true,
                                     tension: 0.4,
-                                    pointRadius: 4,
-                                    pointHoverRadius: 6
+                                    pointRadius: window.innerWidth < 768 ? 3 : 4,
+                                    pointHoverRadius: window.innerWidth < 768 ? 5 : 6
                                 }]
                             },
                             options: {
                                 responsive: true,
                                 maintainAspectRatio: false,
                                 interaction: { intersect: false, mode: 'index' },
+                                layout: {
+                                    padding: window.innerWidth < 768 ? 5 : 10
+                                },
                                 plugins: {
                                     legend: { 
                                         position: 'top', 
@@ -472,6 +517,13 @@
                     // Classification Doughnut Chart
                     const classCtx = document.getElementById('classificationChart');
                     if (classCtx) {
+                        // Ensure canvas has proper dimensions
+                        const classContainer = classCtx.parentElement;
+                        if (classContainer) {
+                            classContainer.style.width = '100%';
+                            classContainer.style.height = '320px';
+                        }
+                        
                         this.charts.classification = new Chart(classCtx, {
                             type: 'doughnut',
                             data: {
@@ -486,7 +538,10 @@
                             options: {
                                 responsive: true,
                                 maintainAspectRatio: false,
-                                cutout: '70%',
+                                cutout: window.innerWidth < 768 ? '60%' : '70%',
+                                layout: {
+                                    padding: window.innerWidth < 768 ? 5 : 10
+                                },
                                 plugins: {
                                     legend: { 
                                         position: 'bottom', 
@@ -514,6 +569,13 @@
                     // Daily Chart
                     const dailyCtx = document.getElementById('dailyChart');
                     if (dailyCtx) {
+                        // Ensure canvas has proper dimensions
+                        const dailyContainer = dailyCtx.parentElement;
+                        if (dailyContainer) {
+                            dailyContainer.style.width = '100%';
+                            dailyContainer.style.height = '256px';
+                        }
+                        
                         this.charts.daily = new Chart(dailyCtx, {
                             type: 'bar',
                             data: {
@@ -528,6 +590,9 @@
                             options: {
                                 responsive: true,
                                 maintainAspectRatio: false,
+                                layout: {
+                                    padding: window.innerWidth < 768 ? 5 : 10
+                                },
                                 plugins: {
                                     legend: { display: false },
                                     tooltip: {
@@ -561,6 +626,13 @@
                     // Weekday Chart
                     const weekdayCtx = document.getElementById('weekdayChart');
                     if (weekdayCtx) {
+                        // Ensure canvas has proper dimensions
+                        const weekdayContainer = weekdayCtx.parentElement;
+                        if (weekdayContainer) {
+                            weekdayContainer.style.width = '100%';
+                            weekdayContainer.style.height = '256px';
+                        }
+                        
                         this.charts.weekday = new Chart(weekdayCtx, {
                             type: 'bar',
                             data: {
@@ -575,6 +647,9 @@
                             options: {
                                 responsive: true,
                                 maintainAspectRatio: false,
+                                layout: {
+                                    padding: window.innerWidth < 768 ? 5 : 10
+                                },
                                 plugins: {
                                     legend: { display: false },
                                     tooltip: {
