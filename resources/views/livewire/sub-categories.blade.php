@@ -13,7 +13,7 @@
     <div class="grid gap-4">
         @foreach ($subCategories as $category)
             <div
-                class="bg-white dark:bg-zinc-800 overflow-hidden shadow-sm sm:rounded-lg p-4 transition duration-150 ease-in-out hover:shadow-md">
+                class="bg-white dark:bg-zinc-800/90 overflow-hidden shadow-sm dark:shadow-lg dark:shadow-black/10 sm:rounded-lg p-4 border border-transparent dark:border-zinc-600 transition duration-150 ease-in-out hover:shadow-md dark:hover:shadow-xl">
                 <div class="flex justify-between items-center">
                     <div class="flex items-center gap-3">
                         <div
@@ -41,8 +41,7 @@
                                     d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
                             </svg>
                         </button>
-                        <button wire:click="delete({{ $category->id }})"
-                            wire:confirm="Are you sure you want to delete this sub-category?"
+                        <button onclick="confirmDelete('Are you sure you want to delete this sub-category?', () => @this.call('delete', {{ $category->id }}))"
                             class="p-1 text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                                 stroke="currentColor" class="w-5 h-5">
@@ -81,7 +80,7 @@
 
     @if($isOpen)
         <div class="relative z-50 pointer-events-none" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div class="fixed inset-0 bg-gray-500/75 transition-opacity pointer-events-auto" aria-hidden="true"
+            <div class="fixed inset-0 bg-gray-500/75 dark:bg-gray-900/75 transition-opacity pointer-events-auto" aria-hidden="true"
                 wire:click="closeModal"></div>
 
             <div class="fixed inset-0 z-10 w-screen overflow-y-auto pointer-events-auto">
@@ -98,26 +97,26 @@
                                     <div class="mt-4 space-y-4">
                                         <div>
                                             <label for="name"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
+                                                class="block text-base font-semibold text-gray-900 dark:text-white mb-2">Name</label>
                                             <input type="text" wire:model="name" id="name"
-                                                class="mt-1 block w-full rounded-md border-gray-300 dark:border-zinc-700 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-zinc-900 dark:text-white"
+                                                class="mt-1 block w-full px-4 py-3 text-base rounded-lg border-2 border-gray-300 dark:border-zinc-600 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-900/90 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                                                 placeholder="e.g. Groceries">
-                                            @error('name') <span class="text-red-500 text-xs">{{ $message }}</span>
+                                            @error('name') <span class="text-red-500 text-sm font-medium mt-1 block">{{ $message }}</span>
                                             @enderror
                                         </div>
 
                                         <div>
                                             <label for="parent_id"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Parent
+                                                class="block text-base font-semibold text-gray-900 dark:text-white mb-2">Parent
                                                 Category</label>
                                             <select wire:model="parent_id" id="parent_id"
-                                                class="mt-1 block w-full rounded-md border-gray-300 dark:border-zinc-700 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-zinc-900 dark:text-white">
+                                                class="mt-1 block w-full px-4 py-3 text-base rounded-lg border-2 border-gray-300 dark:border-zinc-600 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-900/90 dark:text-white">
                                                 <option value="">Select Parent Category</option>
                                                 @foreach ($parentCategories as $cat)
                                                     <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                                                 @endforeach
                                             </select>
-                                            @error('parent_id') <span class="text-red-500 text-xs">{{ $message }}</span>
+                                            @error('parent_id') <span class="text-red-500 text-sm font-medium mt-1 block">{{ $message }}</span>
                                             @enderror
                                         </div>
                                     </div>

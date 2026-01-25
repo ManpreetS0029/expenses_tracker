@@ -1,0 +1,19 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="128" fill="#6366f1"/>
+  
+  <!-- Wallet Icon -->
+  <path d="M128 192C128 174.327 142.327 160 160 160H352C369.673 160 384 174.327 384 192V320C384 337.673 369.673 352 352 352H160C142.327 352 128 337.673 128 320V192Z" fill="white"/>
+  
+  <!-- Card -->
+  <rect x="160" y="200" width="192" height="120" rx="12" fill="#6366f1" fill-opacity="0.2"/>
+  
+  <!-- Dollar Sign -->
+  <path d="M256 220C246.059 220 238 228.059 238 238C238 247.941 246.059 256 256 256C265.941 256 274 264.059 274 274C274 283.941 265.941 292 256 292M256 210V220M256 292V302" stroke="white" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- Decorative Lines -->
+  <line x1="180" y1="240" x2="220" y2="240" stroke="white" stroke-width="4" stroke-linecap="round" opacity="0.5"/>
+  <line x1="180" y1="260" x2="210" y2="260" stroke="white" stroke-width="4" stroke-linecap="round" opacity="0.5"/>
+  <line x1="292" y1="240" x2="332" y2="240" stroke="white" stroke-width="4" stroke-linecap="round" opacity="0.5"/>
+  <line x1="302" y1="260" x2="332" y2="260" stroke="white" stroke-width="4" stroke-linecap="round" opacity="0.5"/>
+</svg>

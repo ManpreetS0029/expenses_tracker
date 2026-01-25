@@ -64,3 +64,92 @@ select:focus[data-flux-control] {
 /* \[:where(&)\]:size-4 {
     @apply size-4;
 } */
+
+/* SweetAlert2 Dark Mode Customization */
+.dark .swal2-popup {
+    background-color: #262626 !important; /* zinc-800 */
+    color: #fafafa !important; /* zinc-50 */
+    border: 1px solid #404040 !important; /* zinc-700 */
+}
+
+.dark .swal2-title {
+    color: #fafafa !important; /* zinc-50 */
+}
+
+.dark .swal2-html-container {
+    color: #d4d4d4 !important; /* zinc-300 */
+}
+
+.dark .swal2-confirm {
+    background-color: #dc2626 !important; /* red-600 */
+    color: #ffffff !important;
+    border: none !important;
+}
+
+.dark .swal2-confirm:hover {
+    background-color: #b91c1c !important; /* red-700 */
+}
+
+.dark .swal2-cancel {
+    background-color: #525252 !important; /* zinc-600 */
+    color: #fafafa !important; /* zinc-50 */
+    border: none !important;
+}
+
+.dark .swal2-cancel:hover {
+    background-color: #404040 !important; /* zinc-700 */
+}
+
+.dark .swal2-close {
+    color: #a3a3a3 !important; /* zinc-400 */
+}
+
+.dark .swal2-close:hover {
+    color: #d4d4d4 !important; /* zinc-300 */
+}
+
+.dark .swal2-toast {
+    background-color: #262626 !important; /* zinc-800 */
+    color: #fafafa !important; /* zinc-50 */
+    border: 1px solid #404040 !important; /* zinc-700 */
+}
+
+.dark .swal2-toast .swal2-title {
+    color: #fafafa !important; /* zinc-50 */
+}
+
+.dark .swal2-toast .swal2-html-container {
+    color: #d4d4d4 !important; /* zinc-300 */
+}
+
+.dark .swal2-progress-bar {
+    background-color: #6366f1 !important; /* indigo-500 */
+}
+
+.dark .swal2-icon.swal2-success {
+    border-color: #10b981 !important; /* green-500 */
+    color: #10b981 !important;
+}
+
+.dark .swal2-icon.swal2-success [class^=swal2-success-line] {
+    background-color: #10b981 !important;
+}
+
+.dark .swal2-icon.swal2-error {
+    border-color: #ef4444 !important; /* red-500 */
+    color: #ef4444 !important;
+}
+
+.dark .swal2-icon.swal2-error [class^=swal2-x-mark-line] {
+    background-color: #ef4444 !important;
+}
+
+.dark .swal2-icon.swal2-warning {
+    border-color: #f59e0b !important; /* amber-500 */
+    color: #f59e0b !important;
+}
+
+.dark .swal2-icon.swal2-info {
+    border-color: #3b82f6 !important; /* blue-500 */
+    color: #3b82f6 !important;
+}

@@ -4,9 +4,9 @@ namespace App\Livewire;
 
 use App\Models\Category;
 use Illuminate\Support\Facades\Auth;
-use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Lazy;
+use Livewire\Component;
 
 #[Lazy]
 #[Layout('layouts.app')]
@@ -20,7 +20,9 @@ class Categories extends Component
     }
 
     public $name = '';
+
     public $categoryId = null;
+
     public $isOpen = false;
 
     protected function rules()
@@ -58,21 +60,23 @@ class Categories extends Component
             $category->update([
                 'name' => $this->name,
             ]);
+            $message = 'Category updated successfully';
         } else {
             Category::create([
                 'user_id' => Auth::id(),
                 'name' => $this->name,
             ]);
+            $message = 'Category created successfully';
         }
 
         $this->closeModal();
-        $this->dispatch('category-saved');
+        $this->dispatch('alert-success', ['message' => $message]);
     }
 
     public function delete($id)
     {
         Category::where('user_id', Auth::id())->findOrFail($id)->delete();
-        $this->dispatch('category-deleted');
+        $this->dispatch('alert-success', ['message' => 'Category deleted successfully']);
     }
 
     public $search = '';
@@ -86,7 +90,7 @@ class Categories extends Component
     {
         $categories = Category::where('user_id', Auth::id())
             ->when($this->search, function ($query) {
-                $query->where('name', 'like', '%' . $this->search . '%');
+                $query->where('name', 'like', '%'.$this->search.'%');
             })
             ->orderBy('name', 'asc')
             ->paginate(10);

@@ -6,15 +6,34 @@ use App\Models\Expense;
 use App\Models\MonthlyTarget;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Livewire\Component;
 use Livewire\Attributes\Layout;
-
 use Livewire\Attributes\Lazy;
+use Livewire\Component;
 
 #[Lazy]
 #[Layout('layouts.app')]
 class Dashboard extends Component
 {
+    public $monthFilter = '';
+
+    public $yearFilter = '';
+
+    public function mount()
+    {
+        $this->yearFilter = date('Y');
+        $this->monthFilter = date('m');
+    }
+
+    public function updatedMonthFilter()
+    {
+        // Reset to first page if pagination exists
+    }
+
+    public function updatedYearFilter()
+    {
+        // Reset to first page if pagination exists
+    }
+
     public function placeholder()
     {
         return view('livewire.placeholders.dashboard-skeleton');
@@ -23,106 +42,220 @@ class Dashboard extends Component
     public function render()
     {
         $userId = Auth::id();
-        $now = Carbon::now();
-        $startOfMonth = $now->copy()->startOfMonth();
-        $endOfMonth = $now->copy()->endOfMonth();
 
-        // 1. Current Month Stats
+        // Use filters if set, otherwise use current month
+        if ($this->yearFilter && $this->monthFilter) {
+            $selectedDate = Carbon::createFromDate($this->yearFilter, $this->monthFilter, 1);
+            $startOfMonth = $selectedDate->copy()->startOfMonth();
+            $endOfMonth = $selectedDate->copy()->endOfMonth();
+            $now = $selectedDate;
+        } else {
+            $now = Carbon::now();
+            $startOfMonth = $now->copy()->startOfMonth();
+            $endOfMonth = $now->copy()->endOfMonth();
+        }
+
+        // Current Month Target
         $monthlyTarget = MonthlyTarget::where('user_id', $userId)
             ->where('month', '>=', $startOfMonth->toDateString())
             ->where('month', '<=', $endOfMonth->toDateString())
             ->first();
 
-        $totalIncome = $monthlyTarget ? $monthlyTarget->total_income : 0;
+        // Monthly Income
+        $monthlyIncome = $monthlyTarget ? $monthlyTarget->total_income : 0;
 
+        // Monthly Expenses
         $monthlyExpenses = Expense::where('user_id', $userId)
             ->whereBetween('date', [$startOfMonth, $endOfMonth])
             ->where('type', 'debit')
             ->sum('amount');
 
-        // Total Lifetime Balance
-        $allIncome = MonthlyTarget::where('user_id', $userId)->sum('total_income');
-        $allCredits = Expense::where('user_id', $userId)->where('type', 'credit')->sum('amount');
-        $allDebits = Expense::where('user_id', $userId)->where('type', 'debit')->sum('amount');
-        $lifetimeBalance = ($allIncome + $allCredits) - $allDebits;
+        // Monthly Savings
+        $monthlySavings = $monthlyIncome - $monthlyExpenses;
 
-        $classificationBreakdown = Expense::where('user_id', $userId)
+        // Lifetime Balance
+        $totalIncome = MonthlyTarget::where('user_id', $userId)->sum('total_income');
+        $totalCredits = Expense::where('user_id', $userId)->where('type', 'credit')->sum('amount');
+        $totalDebits = Expense::where('user_id', $userId)->where('type', 'debit')->sum('amount');
+        $lifetimeBalance = ($totalIncome + $totalCredits) - $totalDebits;
+
+        // Average Daily Spending
+        // If viewing a past month, use all days. If current month, use days elapsed
+        $isCurrentMonth = $now->isCurrentMonth();
+        $daysElapsed = $isCurrentMonth ? Carbon::now()->day : $now->daysInMonth;
+        $avgDailySpending = $daysElapsed > 0 ? $monthlyExpenses / $daysElapsed : 0;
+        $daysInMonth = $now->daysInMonth;
+        $daysRemaining = $daysInMonth - $daysElapsed;
+        $projectedExpenses = $isCurrentMonth ? ($monthlyExpenses + ($avgDailySpending * $daysRemaining)) : $monthlyExpenses;
+
+        // Budget Progress
+        $totalBudget = $monthlyTarget ? ($monthlyTarget->needs + $monthlyTarget->wants) : 0;
+        $budgetUsedPercent = $totalBudget > 0 ? ($monthlyExpenses / $totalBudget) * 100 : 0;
+
+        // Savings Rate
+        $savingsRate = $monthlyIncome > 0 ? ($monthlySavings / $monthlyIncome) * 100 : 0;
+
+        // Expense by Classification (Doughnut Chart)
+        $classificationData = Expense::where('user_id', $userId)
             ->whereBetween('date', [$startOfMonth, $endOfMonth])
             ->where('type', 'debit')
-            ->selectRaw('classification, sum(amount) as total')
+            ->selectRaw('classification, SUM(amount) as total')
             ->groupBy('classification')
+            ->get()
             ->pluck('total', 'classification')
             ->toArray();
 
-        // Ensure all classifications exist even if 0
-        $classifications = ['Needs', 'Wants', 'Savings', 'Investments'];
-        $chartData = [];
-        foreach ($classifications as $class) {
-            $chartData[$class] = $classificationBreakdown[$class] ?? 0;
+        $classifications = ['Needs' => 0, 'Wants' => 0, 'Savings' => 0, 'Investments' => 0];
+        foreach ($classificationData as $key => $value) {
+            if (isset($classifications[$key])) {
+                $classifications[$key] = (float) $value;
+            }
         }
 
-        // 2. Trend Data (Last 6 Months)
-        $sixMonthsAgo = $now->copy()->subMonths(5)->startOfMonth();
-        $trendsData = Expense::where('user_id', $userId)
-            ->where('date', '>=', $sixMonthsAgo)
-            ->get();
-
+        // Income vs Expenses Trend (Last 6 Months)
+        $trendData = [];
         $trendLabels = [];
-        $incomeTrend = [];
-        $expenseTrend = [];
-
         for ($i = 5; $i >= 0; $i--) {
             $month = $now->copy()->subMonths($i);
-            $monthKey = $month->format('Y-m');
+            $monthStart = $month->copy()->startOfMonth();
+            $monthEnd = $month->copy()->endOfMonth();
             $trendLabels[] = $month->format('M Y');
 
-            $monthStats = $trendsData->filter(function ($expense) use ($monthKey) {
-                $date = \Carbon\Carbon::parse($expense->date);
-                return $date->format('Y-m') === $monthKey;
-            });
+            $income = MonthlyTarget::where('user_id', $userId)
+                ->whereBetween('month', [$monthStart, $monthEnd])
+                ->sum('total_income');
 
-            $incomeTrend[] = (float) $monthStats->where('type', 'credit')->sum('amount');
-            $expenseTrend[] = (float) $monthStats->where('type', 'debit')->sum('amount');
+            $expenses = Expense::where('user_id', $userId)
+                ->whereBetween('date', [$monthStart, $monthEnd])
+                ->where('type', 'debit')
+                ->sum('amount');
+
+            $trendData['income'][] = (float) $income;
+            $trendData['expenses'][] = (float) $expenses;
         }
 
-        // 3. Category Breakdown (Top 5)
-        $categoryBreakdown = Expense::where('user_id', $userId)
-            ->whereBetween('date', [$startOfMonth, $endOfMonth])
-            ->where('type', 'debit')
-            ->with('category')
-            ->selectRaw('category_id, sum(amount) as total')
-            ->groupBy('category_id')
+        // Daily Spending (Selected Month)
+        $dailyData = [];
+        $dailyLabels = [];
+        $daysToShow = $isCurrentMonth ? $daysElapsed : $now->daysInMonth;
+        for ($day = 1; $day <= $daysToShow; $day++) {
+            $date = $now->copy()->day($day);
+            $dailyLabels[] = $day;
+            $amount = Expense::where('user_id', $userId)
+                ->whereDate('date', $date->toDateString())
+                ->where('type', 'debit')
+                ->sum('amount');
+            $dailyData[] = (float) $amount;
+        }
+
+        // Top Categories
+        $topCategories = Expense::where('expenses.user_id', $userId)
+            ->whereBetween('expenses.date', [$startOfMonth, $endOfMonth])
+            ->where('expenses.type', 'debit')
+            ->join('categories', 'expenses.category_id', '=', 'categories.id')
+            ->selectRaw('categories.name, SUM(expenses.amount) as total')
+            ->groupBy('categories.id', 'categories.name')
             ->orderByDesc('total')
             ->limit(5)
             ->get()
-            ->map(function ($item) {
-                return [
-                    'name' => $item->category->name ?? 'Uncategorized',
-                    'total' => $item->total
-                ];
-            });
+            ->map(fn ($item) => [
+                'name' => $item->name,
+                'total' => (float) $item->total,
+            ])
+            ->toArray();
 
-        // 4. Recent Expenses
-        $recentExpenses = Expense::where('user_id', $userId)
-            ->with('category')
-            ->orderBy('date', 'desc')
-            ->limit(5)
+        // Calculate percentage for each category
+        $totalCategorySpending = array_sum(array_column($topCategories, 'total'));
+        $topCategories = array_map(function ($category) use ($totalCategorySpending) {
+            $category['percentage'] = $totalCategorySpending > 0 ? ($category['total'] / $totalCategorySpending) * 100 : 0;
+
+            return $category;
+        }, $topCategories);
+
+        // Spending by Day of Week
+        $weekdayData = [0, 0, 0, 0, 0, 0, 0];
+        $expenses = Expense::where('user_id', $userId)
+            ->whereBetween('date', [$startOfMonth, $endOfMonth])
+            ->where('type', 'debit')
             ->get();
 
+        foreach ($expenses as $expense) {
+            $dayOfWeek = Carbon::parse($expense->date)->dayOfWeek;
+            $weekdayData[$dayOfWeek] += $expense->amount;
+        }
 
-        $this->dispatch('charts-updated');
+        $weekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+        // Classification Budget Breakdown
+        $classificationBudgets = [];
+        if ($monthlyTarget) {
+            $classificationBudgets = [
+                [
+                    'name' => 'Needs',
+                    'budget' => (float) $monthlyTarget->needs,
+                    'spent' => $classifications['Needs'],
+                    'percent' => $monthlyTarget->needs > 0 ? min(($classifications['Needs'] / $monthlyTarget->needs) * 100, 100) : 0,
+                ],
+                [
+                    'name' => 'Wants',
+                    'budget' => (float) $monthlyTarget->wants,
+                    'spent' => $classifications['Wants'],
+                    'percent' => $monthlyTarget->wants > 0 ? min(($classifications['Wants'] / $monthlyTarget->wants) * 100, 100) : 0,
+                ],
+                [
+                    'name' => 'Savings',
+                    'budget' => (float) $monthlyTarget->savings,
+                    'spent' => $classifications['Savings'],
+                    'percent' => $monthlyTarget->savings > 0 ? min(($classifications['Savings'] / $monthlyTarget->savings) * 100, 100) : 0,
+                ],
+                [
+                    'name' => 'Investments',
+                    'budget' => (float) $monthlyTarget->investments,
+                    'spent' => $classifications['Investments'],
+                    'percent' => $monthlyTarget->investments > 0 ? min(($classifications['Investments'] / $monthlyTarget->investments) * 100, 100) : 0,
+                ],
+            ];
+        }
+
+        // Recent Transactions
+        $recentExpenses = Expense::where('user_id', $userId)
+            ->with('category:id,name')
+            ->orderBy('date', 'desc')
+            ->limit(8)
+            ->get();
+
+        // Get available years for filter
+        $availableYears = Expense::where('user_id', $userId)
+            ->selectRaw("strftime('%Y', date) as year")
+            ->distinct()
+            ->orderBy('year', 'desc')
+            ->pluck('year');
+
+        $this->dispatch('init-charts');
+
         return view('livewire.dashboard', [
-            'totalIncome' => $totalIncome,
-            'monthlyExpenses' => $monthlyExpenses,
-            'monthlySavings' => $totalIncome - $monthlyExpenses,
-            'lifetimeBalance' => $lifetimeBalance,
-            'chartData' => $chartData,
+            'monthlyIncome' => (float) $monthlyIncome,
+            'monthlyExpenses' => (float) $monthlyExpenses,
+            'monthlySavings' => (float) $monthlySavings,
+            'lifetimeBalance' => (float) $lifetimeBalance,
+            'avgDailySpending' => (float) $avgDailySpending,
+            'projectedExpenses' => (float) $projectedExpenses,
+            'budgetUsedPercent' => (float) $budgetUsedPercent,
+            'savingsRate' => (float) $savingsRate,
+            'totalBudget' => (float) $totalBudget,
+            'classifications' => $classifications,
             'trendLabels' => $trendLabels,
-            'incomeTrend' => $incomeTrend,
-            'expenseTrend' => $expenseTrend,
-            'categoryBreakdown' => $categoryBreakdown,
+            'trendIncome' => $trendData['income'],
+            'trendExpenses' => $trendData['expenses'],
+            'dailyLabels' => $dailyLabels,
+            'dailyData' => $dailyData,
+            'topCategories' => $topCategories,
+            'weekdayLabels' => $weekdayLabels,
+            'weekdayData' => array_map('floatval', $weekdayData),
+            'classificationBudgets' => $classificationBudgets,
             'recentExpenses' => $recentExpenses,
-            'monthlyTarget' => $monthlyTarget,
+            'currentMonth' => $now->format('F Y'),
+            'availableYears' => $availableYears,
         ]);
     }
 }

@@ -10,24 +10,17 @@
         </button>
     </div>
 
-    <div class="bg-white dark:bg-zinc-800 overflow-hidden shadow-sm sm:rounded-lg">
-        @if (session()->has('message'))
-            <div
-                class="p-4 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-b border-green-200 dark:border-green-800">
-                {{ session('message') }}
-            </div>
-        @endif
-
+    <div class="bg-white dark:bg-zinc-800/90 overflow-hidden shadow-sm dark:shadow-lg dark:shadow-black/10 sm:rounded-lg border border-transparent dark:border-zinc-600">
         <div
             class="p-4 border-b border-gray-200 dark:border-zinc-700 flex flex-col md:flex-row gap-4 justify-between items-center">
             <div class="w-full max-w-md flex gap-4">
                 <div class="flex-1">
                     <input wire:model.live.debounce.300ms="search" type="text" placeholder="Search..."
-                        class="w-full rounded-md border-gray-300 dark:border-zinc-700 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-zinc-900 dark:text-white">
+                        class="w-full px-4 py-3 text-base rounded-lg border-2 border-gray-300 dark:border-zinc-600 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-900/90 dark:text-white placeholder-gray-400 dark:placeholder-gray-500">
                 </div>
-                <div class="w-32">
+                <div class="w-40">
                     <select wire:model.live="yearFilter"
-                        class="w-full rounded-md border-gray-300 dark:border-zinc-700 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-zinc-900 dark:text-white">
+                        class="w-full px-4 py-3 text-base rounded-lg border-2 border-gray-300 dark:border-zinc-600 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-900/90 dark:text-white">
                         <option value="">All Years</option>
                         @foreach($availableYears as $year)
                             <option value="{{ $year }}">{{ $year }}</option>
@@ -63,22 +56,21 @@
                             <td class="px-6 py-4">₹{{ number_format($target->investments, 2) }}</td>
                             <td class="px-6 py-4 text-right flex justify-end gap-2">
                                 <button wire:click="edit({{ $target->id }})"
-                                    class="p-1 text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 transition"
+                                    class="p-1 text-gray-600 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 transition"
                                     title="Edit">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                        stroke-width="1.5" stroke="currentColor" class="size-5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                        stroke="currentColor" class="w-5 h-5">
                                         <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                            d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
                                     </svg>
                                 </button>
-                                <button wire:click="delete({{ $target->id }})"
-                                    wire:confirm="Are you sure you want to delete this target?"
-                                    class="p-1 text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 transition"
+                                <button onclick="confirmDelete('Are you sure you want to delete this target?', () => @this.call('delete', {{ $target->id }}))"
+                                    class="p-1 text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition"
                                     title="Delete">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                        stroke-width="1.5" stroke="currentColor" class="size-5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                        stroke="currentColor" class="w-5 h-5">
                                         <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                            d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                                     </svg>
                                 </button>
                             </td>
@@ -101,7 +93,7 @@
 
     @if($isOpen)
         <div class="relative z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div class="fixed inset-0 bg-gray-500/75 transition-opacity" aria-hidden="true" wire:click="closeModal"></div>
+            <div class="fixed inset-0 bg-gray-500/75 dark:bg-gray-900/75 transition-opacity" aria-hidden="true" wire:click="closeModal"></div>
             <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
                 <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
                     <div
@@ -115,30 +107,30 @@
                                 <!-- Month Selection -->
                                 <div>
                                     <label for="month_year"
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Month &
+                                        class="block text-base font-semibold text-gray-900 dark:text-white mb-2">Month &
                                         Year</label>
                                     <input type="month" wire:model="month_year" id="month_year"
-                                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-zinc-700 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-zinc-900 dark:text-white">
-                                    @error('month_year') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                        class="mt-1 block w-full px-4 py-3 text-base rounded-lg border-2 border-gray-300 dark:border-zinc-600 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-900/90 dark:text-white">
+                                    @error('month_year') <span class="text-red-500 text-sm font-medium mt-1 block">{{ $message }}</span> @enderror
                                 </div>
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <!-- Total Income -->
                                     <div class="col-span-1 md:col-span-2">
                                         <label for="total_income"
-                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Total
+                                            class="block text-base font-semibold text-gray-900 dark:text-white mb-2">Total
                                             Expected Income</label>
-                                        <div class="relative mt-1 rounded-md shadow-sm">
+                                        <div class="relative mt-1 rounded-lg shadow-sm">
                                             <div
-                                                class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                                <span class="text-gray-500 sm:text-sm">₹</span>
+                                                class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                                                <span class="text-gray-500 text-base font-medium">₹</span>
                                             </div>
                                             <input type="number" wire:model.live.debounce.500ms="total_income"
                                                 id="total_income" step="0.01"
-                                                class="block w-full rounded-md border-gray-300 dark:border-zinc-700 pl-7 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-zinc-900 dark:text-white"
+                                                class="block w-full px-4 py-3 pl-10 text-base rounded-lg border-2 border-gray-300 dark:border-zinc-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-900/90 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                                                 placeholder="0.00">
                                         </div>
-                                        @error('total_income') <span class="text-red-500 text-xs">{{ $message }}</span>
+                                        @error('total_income') <span class="text-red-500 text-sm font-medium mt-1 block">{{ $message }}</span>
                                         @enderror
                                     </div>
 
@@ -146,96 +138,96 @@
                                     <div>
                                         <div class="flex justify-between items-center mb-1">
                                             <label for="needs"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Needs</label>
+                                                class="block text-base font-semibold text-gray-900 dark:text-white">Needs</label>
                                             <div class="flex items-center gap-1">
                                                 <input type="number" wire:model.live="needs_percent"
-                                                    class="w-12 text-xs rounded-md border-gray-300 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white p-1 text-right"
+                                                    class="w-16 text-sm rounded-md border-2 border-gray-300 dark:border-zinc-600 dark:bg-zinc-900/90 dark:text-white p-2 text-right"
                                                     min="0" max="100">
-                                                <span class="text-xs text-gray-500">%</span>
+                                                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">%</span>
                                             </div>
                                         </div>
-                                        <div class="relative rounded-md shadow-sm">
+                                        <div class="relative rounded-lg shadow-sm">
                                             <div
-                                                class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                                <span class="text-gray-500 sm:text-sm">₹</span>
+                                                class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                                                <span class="text-gray-500 text-base font-medium">₹</span>
                                             </div>
                                             <input type="number" wire:model="needs" id="needs" step="0.01"
-                                                class="block w-full rounded-md border-gray-300 dark:border-zinc-700 pl-7 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-zinc-900 dark:text-white"
+                                                class="block w-full px-4 py-3 pl-10 text-base rounded-lg border-2 border-gray-300 dark:border-zinc-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-900/90 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                                                 placeholder="0.00">
                                         </div>
-                                        @error('needs') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                        @error('needs') <span class="text-red-500 text-sm font-medium mt-1 block">{{ $message }}</span> @enderror
                                     </div>
 
                                     <!-- Wants -->
                                     <div>
                                         <div class="flex justify-between items-center mb-1">
                                             <label for="wants"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Wants</label>
+                                                class="block text-base font-semibold text-gray-900 dark:text-white">Wants</label>
                                             <div class="flex items-center gap-1">
                                                 <input type="number" wire:model.live="wants_percent"
-                                                    class="w-12 text-xs rounded-md border-gray-300 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white p-1 text-right"
+                                                    class="w-16 text-sm rounded-md border-2 border-gray-300 dark:border-zinc-600 dark:bg-zinc-900/90 dark:text-white p-2 text-right"
                                                     min="0" max="100">
-                                                <span class="text-xs text-gray-500">%</span>
+                                                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">%</span>
                                             </div>
                                         </div>
-                                        <div class="relative rounded-md shadow-sm">
+                                        <div class="relative rounded-lg shadow-sm">
                                             <div
-                                                class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                                <span class="text-gray-500 sm:text-sm">₹</span>
+                                                class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                                                <span class="text-gray-500 text-base font-medium">₹</span>
                                             </div>
                                             <input type="number" wire:model="wants" id="wants" step="0.01"
-                                                class="block w-full rounded-md border-gray-300 dark:border-zinc-700 pl-7 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-zinc-900 dark:text-white"
+                                                class="block w-full px-4 py-3 pl-10 text-base rounded-lg border-2 border-gray-300 dark:border-zinc-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-900/90 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                                                 placeholder="0.00">
                                         </div>
-                                        @error('wants') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                        @error('wants') <span class="text-red-500 text-sm font-medium mt-1 block">{{ $message }}</span> @enderror
                                     </div>
 
                                     <!-- Savings -->
                                     <div>
                                         <div class="flex justify-between items-center mb-1">
                                             <label for="savings"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Savings</label>
+                                                class="block text-base font-semibold text-gray-900 dark:text-white">Savings</label>
                                             <div class="flex items-center gap-1">
                                                 <input type="number" wire:model.live="savings_percent"
-                                                    class="w-12 text-xs rounded-md border-gray-300 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white p-1 text-right"
+                                                    class="w-16 text-sm rounded-md border-2 border-gray-300 dark:border-zinc-600 dark:bg-zinc-900/90 dark:text-white p-2 text-right"
                                                     min="0" max="100">
-                                                <span class="text-xs text-gray-500">%</span>
+                                                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">%</span>
                                             </div>
                                         </div>
-                                        <div class="relative rounded-md shadow-sm">
+                                        <div class="relative rounded-lg shadow-sm">
                                             <div
-                                                class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                                <span class="text-gray-500 sm:text-sm">₹</span>
+                                                class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                                                <span class="text-gray-500 text-base font-medium">₹</span>
                                             </div>
                                             <input type="number" wire:model="savings" id="savings" step="0.01"
-                                                class="block w-full rounded-md border-gray-300 dark:border-zinc-700 pl-7 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-zinc-900 dark:text-white"
+                                                class="block w-full px-4 py-3 pl-10 text-base rounded-lg border-2 border-gray-300 dark:border-zinc-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-900/90 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                                                 placeholder="0.00">
                                         </div>
-                                        @error('savings') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                        @error('savings') <span class="text-red-500 text-sm font-medium mt-1 block">{{ $message }}</span> @enderror
                                     </div>
 
                                     <!-- Investments -->
                                     <div>
                                         <div class="flex justify-between items-center mb-1">
                                             <label for="investments"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Investments</label>
+                                                class="block text-base font-semibold text-gray-900 dark:text-white">Investments</label>
                                             <div class="flex items-center gap-1">
                                                 <input type="number" wire:model.live="investments_percent"
-                                                    class="w-12 text-xs rounded-md border-gray-300 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white p-1 text-right"
+                                                    class="w-16 text-sm rounded-md border-2 border-gray-300 dark:border-zinc-600 dark:bg-zinc-900/90 dark:text-white p-2 text-right"
                                                     min="0" max="100">
-                                                <span class="text-xs text-gray-500">%</span>
+                                                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">%</span>
                                             </div>
                                         </div>
-                                        <div class="relative rounded-md shadow-sm">
+                                        <div class="relative rounded-lg shadow-sm">
                                             <div
-                                                class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                                <span class="text-gray-500 sm:text-sm">₹</span>
+                                                class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                                                <span class="text-gray-500 text-base font-medium">₹</span>
                                             </div>
                                             <input type="number" wire:model="investments" id="investments" step="0.01"
-                                                class="block w-full rounded-md border-gray-300 dark:border-zinc-700 pl-7 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-zinc-900 dark:text-white"
+                                                class="block w-full px-4 py-3 pl-10 text-base rounded-lg border-2 border-gray-300 dark:border-zinc-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-900/90 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                                                 placeholder="0.00">
                                         </div>
-                                        @error('investments') <span class="text-red-500 text-xs">{{ $message }}</span>
+                                        @error('investments') <span class="text-red-500 text-sm font-medium mt-1 block">{{ $message }}</span>
                                         @enderror
                                     </div>
                                 </div>

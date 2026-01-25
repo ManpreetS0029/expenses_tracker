@@ -2,30 +2,42 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
 use App\Models\MonthlyTarget;
 use Carbon\Carbon;
+use Livewire\Attributes\Lazy;
+use Livewire\Component;
 use Livewire\WithPagination;
 
+#[Lazy]
 class MonthlyTargets extends Component
 {
     use WithPagination;
 
     public $month_year;
+
     public $total_income = 0;
+
     public $needs = 0;
+
     public $wants = 0;
+
     public $savings = 0;
+
     public $investments = 0;
 
     // Percentages
     public $needs_percent = 50;
+
     public $wants_percent = 20;
+
     public $savings_percent = 20;
+
     public $investments_percent = 10;
 
     public $targetId = null;
+
     public $isOpen = false;
+
     public $search = '';
 
     protected $rules = [
@@ -53,6 +65,11 @@ class MonthlyTargets extends Component
         $this->resetPage();
     }
 
+    public function placeholder()
+    {
+        return view('livewire.placeholders.monthly-targets-skeleton');
+    }
+
     public function render()
     {
         $query = MonthlyTarget::where('user_id', auth()->id());
@@ -67,8 +84,8 @@ class MonthlyTargets extends Component
         $targets = $query
             ->when($this->search, function ($q) {
                 $q->where(function ($subQ) {
-                    $subQ->where('month', 'like', '%' . $this->search . '%')
-                        ->orWhere('total_income', 'like', '%' . $this->search . '%');
+                    $subQ->where('month', 'like', '%'.$this->search.'%')
+                        ->orWhere('total_income', 'like', '%'.$this->search.'%');
                 });
             })
             ->when($this->yearFilter, function ($q) {
@@ -79,7 +96,7 @@ class MonthlyTargets extends Component
 
         return view('livewire.monthly-targets', [
             'targets' => $targets,
-            'availableYears' => $availableYears
+            'availableYears' => $availableYears,
         ]);
     }
 
@@ -145,7 +162,7 @@ class MonthlyTargets extends Component
     public function delete($id)
     {
         MonthlyTarget::find($id)->delete();
-        session()->flash('message', 'Target deleted successfully.');
+        $this->dispatch('alert-success', ['message' => 'Target deleted successfully']);
     }
 
     public function updatedTotalIncome()
@@ -157,14 +174,17 @@ class MonthlyTargets extends Component
     {
         $this->calculateValues();
     }
+
     public function updatedWantsPercent()
     {
         $this->calculateValues();
     }
+
     public function updatedSavingsPercent()
     {
         $this->calculateValues();
     }
+
     public function updatedInvestmentsPercent()
     {
         $this->calculateValues();
@@ -194,7 +214,7 @@ class MonthlyTargets extends Component
             ['id' => $this->targetId],
             [
                 'user_id' => auth()->id(),
-                'month' => $this->month_year . '-01', // Append day to make it Y-m-d
+                'month' => $this->month_year.'-01', // Append day to make it Y-m-d
                 'total_income' => $this->total_income,
                 'needs' => $this->needs,
                 'wants' => $this->wants,
@@ -203,7 +223,8 @@ class MonthlyTargets extends Component
             ]
         );
 
-        session()->flash('message', 'Targets saved successfully.');
+        $message = $this->targetId ? 'Target updated successfully' : 'Target created successfully';
+        $this->dispatch('alert-success', ['message' => $message]);
         $this->closeModal();
         $this->resetInputFields();
     }

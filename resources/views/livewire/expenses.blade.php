@@ -11,14 +11,14 @@
     </div>
 
     <!-- Filters -->
-    <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
             <input wire:model.live.debounce.300ms="search" type="text" placeholder="Search expenses..."
-                class="w-full rounded-md border-gray-300 dark:border-zinc-700 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-zinc-900 dark:text-white">
+                class="w-full px-4 py-3 text-base rounded-lg border-2 border-gray-300 dark:border-zinc-600 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-900/90 dark:text-white placeholder-gray-400 dark:placeholder-gray-500">
         </div>
         <div>
             <select wire:model.live="typeFilter"
-                class="w-full rounded-md border-gray-300 dark:border-zinc-700 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-zinc-900 dark:text-white">
+                class="w-full px-4 py-3 text-base rounded-lg border-2 border-gray-300 dark:border-zinc-600 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-900/90 dark:text-white">
                 <option value="">All Types</option>
                 <option value="credit">Credit</option>
                 <option value="debit">Debit</option>
@@ -26,10 +26,19 @@
         </div>
         <div>
             <select wire:model.live="categoryFilter"
-                class="w-full rounded-md border-gray-300 dark:border-zinc-700 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-zinc-900 dark:text-white">
+                class="w-full px-4 py-3 text-base rounded-lg border-2 border-gray-300 dark:border-zinc-600 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-900/90 dark:text-white">
                 <option value="">All Categories</option>
                 @foreach($categories as $category)
                     <option value="{{ $category->id }}">{{ $category->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div>
+            <select wire:model.live="monthFilter"
+                class="w-full px-4 py-3 text-base rounded-lg border-2 border-gray-300 dark:border-zinc-600 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-900/90 dark:text-white">
+                <option value="">All Months</option>
+                @foreach(range(1, 12) as $m)
+                    <option value="{{ $m }}">{{ date('F', mktime(0, 0, 0, $m, 1)) }}</option>
                 @endforeach
             </select>
         </div>
@@ -38,7 +47,7 @@
     <div class="flex flex-col gap-4">
         @foreach ($expenses as $expense)
             <div
-                class="bg-white dark:bg-zinc-800 overflow-hidden shadow-sm sm:rounded-lg p-4 transition duration-150 ease-in-out hover:shadow-md">
+                class="bg-white dark:bg-zinc-800/90 overflow-hidden shadow-sm dark:shadow-lg dark:shadow-black/10 sm:rounded-lg p-4 border border-transparent dark:border-zinc-600 transition duration-150 ease-in-out hover:shadow-md dark:hover:shadow-xl">
                 <div class="flex justify-between items-center">
                     <div class="flex items-center gap-4">
                         <div
@@ -59,7 +68,7 @@
                         </div>
                         <div>
                             <div class="font-medium text-gray-900 dark:text-white">
-                                {{ $expense->description ?: $expense->category->name }}
+                                {{ $expense->description ?: 'No description' }}
                             </div>
                             <div class="text-sm text-gray-500 dark:text-gray-400">
                                 {{ $expense->category->name }}
@@ -87,8 +96,7 @@
                                         d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
                                 </svg>
                             </button>
-                            <button wire:click="delete({{ $expense->id }})"
-                                wire:confirm="Are you sure you want to delete this expense?"
+                            <button onclick="confirmDelete('Are you sure you want to delete this expense?', () => @this.call('delete', {{ $expense->id }}))"
                                 class="p-1 text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                                     stroke="currentColor" class="w-5 h-5">
@@ -130,7 +138,7 @@
 
     @if($isOpen)
         <div class="relative z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div class="fixed inset-0 bg-gray-500/75 transition-opacity" aria-hidden="true" wire:click="closeModal"></div>
+            <div class="fixed inset-0 bg-gray-500/75 dark:bg-gray-900/75 transition-opacity" aria-hidden="true" wire:click="closeModal"></div>
 
             <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
                 <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
@@ -145,87 +153,100 @@
                                 <!-- Type -->
                                 <div>
                                     <label
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
+                                        class="block text-base font-semibold text-gray-900 dark:text-white mb-2">Type</label>
                                     <div class="grid grid-cols-2 gap-4">
                                         <label
-                                            class="cursor-pointer border rounded-md p-3 flex items-center justify-center gap-2 {{ $type === 'debit' ? 'bg-red-50 border-red-200 text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400 ring-1 ring-red-500' : 'border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300' }}">
+                                            class="cursor-pointer border-2 rounded-lg p-4 flex items-center justify-center gap-2 text-base font-medium transition {{ $type === 'debit' ? 'bg-red-50 border-red-300 text-red-700 dark:bg-red-900/30 dark:border-red-700 dark:text-red-400 ring-2 ring-red-500' : 'border-gray-300 dark:border-zinc-600 hover:bg-gray-50 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300' }}">
                                             <input type="radio" value="debit" wire:model.live="type" class="sr-only">
                                             <span>Debit</span>
                                         </label>
                                         <label
-                                            class="cursor-pointer border rounded-md p-3 flex items-center justify-center gap-2 {{ $type === 'credit' ? 'bg-green-50 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400 ring-1 ring-green-500' : 'border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300' }}">
+                                            class="cursor-pointer border-2 rounded-lg p-4 flex items-center justify-center gap-2 text-base font-medium transition {{ $type === 'credit' ? 'bg-green-50 border-green-300 text-green-700 dark:bg-green-900/30 dark:border-green-700 dark:text-green-400 ring-2 ring-green-500' : 'border-gray-300 dark:border-zinc-600 hover:bg-gray-50 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300' }}">
                                             <input type="radio" value="credit" wire:model.live="type" class="sr-only">
                                             <span>Credit</span>
                                         </label>
                                     </div>
-                                    @error('type') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                    @error('type') <span class="text-red-500 text-sm font-medium mt-1 block">{{ $message }}</span> @enderror
                                 </div>
 
                                 <!-- Date & Amount -->
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <label for="date"
-                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date</label>
+                                            class="block text-base font-semibold text-gray-900 dark:text-white mb-2">Date</label>
                                         <input type="date" wire:model="date" id="date"
-                                            class="mt-1 block w-full rounded-md border-gray-300 dark:border-zinc-700 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-zinc-900 dark:text-white">
-                                        @error('date') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                            class="mt-1 block w-full px-4 py-3 text-base rounded-lg border-2 border-gray-300 dark:border-zinc-600 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-900/90 dark:text-white">
+                                        @error('date') <span class="text-red-500 text-sm font-medium mt-1 block">{{ $message }}</span> @enderror
                                     </div>
                                     <div>
                                         <label for="amount"
-                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Amount</label>
-                                        <div class="relative mt-1 rounded-md shadow-sm">
+                                            class="block text-base font-semibold text-gray-900 dark:text-white mb-2">Amount</label>
+                                        <div class="relative mt-1 rounded-lg shadow-sm">
                                             <div
-                                                class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                                <span class="text-gray-500 sm:text-sm">₹</span>
+                                                class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                                                <span class="text-gray-500 text-base font-medium">₹</span>
                                             </div>
                                             <input type="number" wire:model="amount" id="amount" step="0.01"
-                                                class="block w-full rounded-md border-gray-300 dark:border-zinc-700 pl-7 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-zinc-900 dark:text-white"
+                                                class="block w-full px-4 py-3 pl-10 text-base rounded-lg border-2 border-gray-300 dark:border-zinc-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-900/90 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                                                 placeholder="0.00">
                                         </div>
-                                        @error('amount') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                        @error('amount') <span class="text-red-500 text-sm font-medium mt-1 block">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
 
                                 <!-- Description -->
                                 <div>
                                     <label for="description"
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
+                                        class="block text-base font-semibold text-gray-900 dark:text-white mb-2">Description</label>
                                     <input type="text" wire:model="description" id="description"
-                                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-zinc-700 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-zinc-900 dark:text-white"
+                                        class="mt-1 block w-full px-4 py-3 text-base rounded-lg border-2 border-gray-300 dark:border-zinc-600 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-900/90 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                                         placeholder="e.g. Lunch with friends">
-                                    @error('description') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                    @error('description') <span class="text-red-500 text-sm font-medium mt-1 block">{{ $message }}</span> @enderror
                                 </div>
 
-                                <!-- Category -->
-                                <div>
-                                    <label for="category_id"
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
-                                    <select wire:model.live="category_id" id="category_id"
-                                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-zinc-700 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-zinc-900 dark:text-white">
-                                        <option value="">Select Category</option>
-                                        @foreach($categories as $category)
-                                            <option value="{{ $category->id }}">{{ $category->name }}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('category_id') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                <!-- Category and Currency -->
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="category_id"
+                                            class="block text-base font-semibold text-gray-900 dark:text-white mb-2">Category</label>
+                                        <select wire:model.live="category_id" id="category_id"
+                                            class="mt-1 block w-full px-4 py-3 text-base rounded-lg border-2 border-gray-300 dark:border-zinc-600 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-900/90 dark:text-white">
+                                            <option value="">Select Category</option>
+                                            @foreach($categories as $category)
+                                                <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('category_id') <span class="text-red-500 text-sm font-medium mt-1 block">{{ $message }}</span> @enderror
+                                    </div>
+                                    <div>
+                                        <label for="currency"
+                                            class="block text-base font-semibold text-gray-900 dark:text-white mb-2">Currency</label>
+                                        <select wire:model.live="currency" id="currency"
+                                            class="mt-1 block w-full px-4 py-3 text-base rounded-lg border-2 border-gray-300 dark:border-zinc-600 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-900/90 dark:text-white">
+                                            @foreach($availableCurrencies as $code => $details)
+                                                <option value="{{ $code }}">{{ $details['symbol'] }} {{ $code }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('currency') <span class="text-red-500 text-sm font-medium mt-1 block">{{ $message }}</span> @enderror
+                                    </div>
                                 </div>
 
                                 <!-- Classification (Needs, Wants, etc) -->
                                 @if($type === 'debit')
                                     <div>
                                         <label for="classification"
-                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Classification</label>
+                                            class="block text-base font-semibold text-gray-900 dark:text-white mb-2">Classification</label>
                                         <div class="mt-1 flex gap-2">
                                             @foreach(['Needs', 'Wants', 'Savings', 'Investments'] as $classOption)
                                                 <label
-                                                    class="cursor-pointer border rounded-md px-3 py-2 text-sm flex-1 text-center {{ $classification === $classOption ? 'bg-indigo-50 border-indigo-200 text-indigo-700 dark:bg-indigo-900/20 dark:border-indigo-800 dark:text-indigo-400 ring-1 ring-indigo-500' : 'border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300' }}">
+                                                    class="cursor-pointer border-2 rounded-lg px-4 py-3 text-base font-medium flex-1 text-center transition {{ $classification === $classOption ? 'bg-indigo-50 border-indigo-300 text-indigo-700 dark:bg-indigo-900/30 dark:border-indigo-700 dark:text-indigo-400 ring-2 ring-indigo-500' : 'border-gray-300 dark:border-zinc-600 hover:bg-gray-50 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300' }}">
                                                     <input type="radio" value="{{ $classOption }}" wire:model.live="classification"
                                                         class="sr-only">
                                                     <span>{{ $classOption }}</span>
                                                 </label>
                                             @endforeach
                                         </div>
-                                        @error('classification') <span class="text-red-500 text-xs">{{ $message }}</span>
+                                        @error('classification') <span class="text-red-500 text-sm font-medium mt-1 block">{{ $message }}</span>
                                         @enderror
                                     </div>
                                 @endif

@@ -4,9 +4,9 @@ namespace App\Livewire;
 
 use App\Models\Category;
 use Illuminate\Support\Facades\Auth;
-use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Lazy;
+use Livewire\Component;
 
 #[Lazy]
 #[Layout('layouts.app')]
@@ -18,8 +18,11 @@ class SubCategories extends Component
     }
 
     public $name = '';
+
     public $parent_id = '';
+
     public $categoryId = null;
+
     public $isOpen = false;
 
     protected function rules()
@@ -60,22 +63,24 @@ class SubCategories extends Component
                 'name' => $this->name,
                 'parent_id' => $this->parent_id,
             ]);
+            $message = 'Sub-category updated successfully';
         } else {
             Category::create([
                 'user_id' => Auth::id(),
                 'name' => $this->name,
                 'parent_id' => $this->parent_id,
             ]);
+            $message = 'Sub-category created successfully';
         }
 
         $this->closeModal();
-        $this->dispatch('category-saved');
+        $this->dispatch('alert-success', ['message' => $message]);
     }
 
     public function delete($id)
     {
         Category::where('user_id', Auth::id())->findOrFail($id)->delete();
-        $this->dispatch('category-deleted');
+        $this->dispatch('alert-success', ['message' => 'Sub-category deleted successfully']);
     }
 
     public function render()

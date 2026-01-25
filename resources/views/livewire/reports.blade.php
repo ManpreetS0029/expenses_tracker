@@ -5,13 +5,23 @@
             <p class="text-sm text-gray-500 dark:text-gray-400">visualize your income and expenses.</p>
         </div>
 
-        <!-- Filters -->
-        <div class="flex gap-2">
+        <div class="flex flex-col md:flex-row gap-4 items-center w-full md:w-auto">
+            <!-- Export Button -->
+            <button wire:click="exportToCsv"
+                class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 active:bg-green-900 focus:outline-none focus:border-green-900 focus:ring ring-green-300 disabled:opacity-25 transition ease-in-out duration-150 w-full md:w-auto">
+                <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Export CSV
+            </button>
+
+            <!-- Filters -->
+            <div class="flex gap-2 w-full md:w-auto">
             <input wire:model.live.debounce.300ms="search" type="text" placeholder="Search..."
-                class="w-full md:w-48 rounded-md border-gray-300 dark:border-zinc-700 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-zinc-900 dark:text-white">
+                class="w-full md:w-48 px-4 py-3 text-base rounded-lg border-2 border-gray-300 dark:border-zinc-600 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-900/90 dark:text-white placeholder-gray-400 dark:placeholder-gray-500">
 
             <select wire:model.live="yearFilter"
-                class="rounded-md border-gray-300 dark:border-zinc-700 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-zinc-900 dark:text-white">
+                class="px-4 py-3 text-base rounded-lg border-2 border-gray-300 dark:border-zinc-600 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-900/90 dark:text-white">
                 <option value="">All Years</option>
                 @foreach($years as $year)
                     <option value="{{ $year }}">{{ $year }}</option>
@@ -19,22 +29,23 @@
             </select>
 
             <select wire:model.live="monthFilter"
-                class="rounded-md border-gray-300 dark:border-zinc-700 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-zinc-900 dark:text-white">
+                class="px-4 py-3 text-base rounded-lg border-2 border-gray-300 dark:border-zinc-600 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-900/90 dark:text-white">
                 <option value="">All Months</option>
                 @foreach(range(1, 12) as $m)
                     <option value="{{ $m }}">{{ date('F', mktime(0, 0, 0, $m, 1)) }}</option>
                 @endforeach
             </select>
+            </div>
         </div>
     </div>
 
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div class="bg-white dark:bg-zinc-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
+        <div class="bg-white dark:bg-zinc-800/90 overflow-hidden shadow-sm dark:shadow-lg dark:shadow-black/10 sm:rounded-lg p-6 border border-transparent dark:border-zinc-600">
             <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Total Credit</h3>
             <p class="text-3xl font-bold text-green-600 dark:text-green-400">₹{{ number_format($totalCredit, 2) }}</p>
         </div>
-        <div class="bg-white dark:bg-zinc-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
+        <div class="bg-white dark:bg-zinc-800/90 overflow-hidden shadow-sm dark:shadow-lg dark:shadow-black/10 sm:rounded-lg p-6 border border-transparent dark:border-zinc-600">
             <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Total Debit</h3>
             <p class="text-3xl font-bold text-red-600 dark:text-red-400">₹{{ number_format($totalDebit, 2) }}</p>
         </div>
@@ -43,24 +54,24 @@
     <!-- Charts -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <!-- Expense Breakdown Chart (Pie) -->
-        <div class="bg-white dark:bg-zinc-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
+        <div class="bg-white dark:bg-zinc-800/90 overflow-hidden shadow-sm dark:shadow-lg dark:shadow-black/10 sm:rounded-lg p-6 border border-transparent dark:border-zinc-600">
             <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Debit Breakdown</h3>
-            <div class="relative h-64 w-full">
+            <div class="relative h-64 w-full" wire:ignore>
                 <canvas id="expenseBreakdownChart"></canvas>
             </div>
         </div>
 
         <!-- Credit vs Debit Chart (Bar) -->
-        <div class="bg-white dark:bg-zinc-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
+        <div class="bg-white dark:bg-zinc-800/90 overflow-hidden shadow-sm dark:shadow-lg dark:shadow-black/10 sm:rounded-lg p-6 border border-transparent dark:border-zinc-600">
             <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Credit vs Debit</h3>
-            <div class="relative h-64 w-full">
+            <div class="relative h-64 w-full" wire:ignore>
                 <canvas id="incomeVsExpenseChart"></canvas>
             </div>
         </div>
     </div>
 
     <!-- Listing -->
-    <div class="bg-white dark:bg-zinc-800 overflow-hidden shadow-sm sm:rounded-lg">
+    <div class="bg-white dark:bg-zinc-800/90 overflow-hidden shadow-sm dark:shadow-lg dark:shadow-black/10 sm:rounded-lg border border-transparent dark:border-zinc-600">
         <div class="p-4 border-b border-gray-200 dark:border-zinc-700">
             <h3 class="text-lg font-medium text-gray-900 dark:text-white">Transactions</h3>
         </div>
@@ -110,103 +121,152 @@
         </div>
     </div>
     
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        document.addEventListener('livewire:navigated', () => {
-            renderCharts();
-        });
-
-        // Initial render
-        renderCharts();
-
-        function renderCharts() {
-            const ctxPie = document.getElementById('expenseBreakdownChart');
-            const ctxBar = document.getElementById('incomeVsExpenseChart');
-
-            if (!ctxPie || !ctxBar) return;
-
-            // Destroy existing charts if any (to prevent canvas reuse issues)
-            if (window.myPieChart) window.myPieChart.destroy();
-            if (window.myBarChart) window.myBarChart.destroy();
-
-            // Data from Livewire
-            const needs = {{ $needs }};
-            const wants = {{ $wants }};
-            const savings = {{ $savings }};
-            const investments = {{ $investments }};
-            const unclassified = {{ $unclassified }};
-
-            const totalCredit = {{ $totalCredit }};
-            const totalDebit = {{ $totalDebit }};
-
-            // Pie Chart
-            window.myPieChart = new Chart(ctxPie, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Needs', 'Wants', 'Savings', 'Investments', 'Other'],
-                    datasets: [{
-                        data: [needs, wants, savings, investments, unclassified],
-                        backgroundColor: [
-                            '#6366f1', // Indigo (Needs)
-                            '#f43f5e', // Rose (Wants)
-                            '#10b981', // Emerald (Savings)
-                            '#f59e0b', // Amber (Investments)
-                            '#9ca3af'  // Gray (Other)
-                        ],
-                        borderWidth: 0
-                    }]
+    @script
+        <script>
+            Alpine.data('reportsCharts', () => ({
+                charts: {},
+                
+                init() {
+                    this.renderCharts();
+                    
+                    // Re-render charts on Livewire updates (pagination, filters, etc.)
+                    Livewire.hook('commit', () => {
+                        this.$nextTick(() => {
+                            this.destroyCharts();
+                            this.renderCharts();
+                        });
+                    });
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'right', labels: { color: '#9ca3af' } }
+                
+                destroyCharts() {
+                    Object.values(this.charts).forEach(chart => chart?.destroy());
+                    this.charts = {};
+                },
+                
+                renderCharts() {
+                    if (typeof Chart === 'undefined') {
+                        setTimeout(() => this.renderCharts(), 200);
+                        return;
                     }
-                }
-            });
+                    
+                    const ctxPie = document.getElementById('expenseBreakdownChart');
+                    const ctxBar = document.getElementById('incomeVsExpenseChart');
 
-            // Bar Chart
-            window.myBarChart = new Chart(ctxBar, {
-                type: 'bar',
-                data: {
-                    labels: ['Credit', 'Debit'],
-                    datasets: [{
-                        label: 'Amount',
-                        data: [totalCredit, totalDebit],
-                        backgroundColor: [
-                            '#10b981', // Green
-                            '#ef4444'  // Red
-                        ],
-                        borderRadius: 5
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    return '₹' + context.raw;
+                    if (!ctxPie || !ctxBar) return;
+
+                    // Data from Livewire
+                    const needs = {{ $needs }};
+                    const wants = {{ $wants }};
+                    const savings = {{ $savings }};
+                    const investments = {{ $investments }};
+                    const unclassified = {{ $unclassified }};
+
+                    const totalCredit = {{ $totalCredit }};
+                    const totalDebit = {{ $totalDebit }};
+
+                    // Detect dark mode
+                    const isDark = document.documentElement.classList.contains('dark');
+                    const textColor = isDark ? '#d1d5db' : '#6b7280';
+                    const gridColor = isDark ? '#374151' : '#e5e7eb';
+
+                    // Pie Chart
+                    this.charts.pie = new Chart(ctxPie, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Needs', 'Wants', 'Savings', 'Investments', 'Other'],
+                            datasets: [{
+                                data: [needs, wants, savings, investments, unclassified],
+                                backgroundColor: [
+                                    '#6366f1', // Indigo (Needs)
+                                    '#f43f5e', // Rose (Wants)
+                                    '#10b981', // Emerald (Savings)
+                                    '#f59e0b', // Amber (Investments)
+                                    '#9ca3af'  // Gray (Other)
+                                ],
+                                borderWidth: 2,
+                                borderColor: isDark ? '#18181b' : '#ffffff',
+                                hoverOffset: 10
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { 
+                                    position: 'right', 
+                                    labels: { 
+                                        color: textColor,
+                                        padding: 12,
+                                        font: { size: 12 }
+                                    } 
+                                },
+                                tooltip: {
+                                    backgroundColor: isDark ? '#18181b' : '#ffffff',
+                                    titleColor: isDark ? '#f3f4f6' : '#111827',
+                                    bodyColor: isDark ? '#d1d5db' : '#374151',
+                                    borderColor: isDark ? '#3f3f46' : '#e5e7eb',
+                                    borderWidth: 1,
+                                    callbacks: {
+                                        label: (context) => context.label + ': ₹' + context.parsed.toLocaleString()
+                                    }
                                 }
                             }
                         }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: '#374151' },
-                            ticks: { color: '#9ca3af' }
+                    });
+
+                    // Bar Chart
+                    this.charts.bar = new Chart(ctxBar, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Credit', 'Debit'],
+                            datasets: [{
+                                label: 'Amount',
+                                data: [totalCredit, totalDebit],
+                                backgroundColor: [
+                                    '#10b981', // Green
+                                    '#ef4444'  // Red
+                                ],
+                                borderRadius: 8,
+                                borderWidth: 2,
+                                borderColor: isDark ? '#18181b' : '#ffffff'
+                            }]
                         },
-                        x: {
-                            grid: { display: false },
-                            ticks: { color: '#9ca3af' }
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: isDark ? '#18181b' : '#ffffff',
+                                    titleColor: isDark ? '#f3f4f6' : '#111827',
+                                    bodyColor: isDark ? '#d1d5db' : '#374151',
+                                    borderColor: isDark ? '#3f3f46' : '#e5e7eb',
+                                    borderWidth: 1,
+                                    callbacks: {
+                                        label: (context) => '₹' + context.parsed.y.toLocaleString()
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: { color: gridColor },
+                                    ticks: { 
+                                        color: textColor,
+                                        callback: (value) => '₹' + value.toLocaleString()
+                                    }
+                                },
+                                x: {
+                                    grid: { display: false },
+                                    ticks: { color: textColor }
+                                }
+                            }
                         }
-                    }
+                    });
                 }
-            });
-        }
-    </script>
+            }));
+        </script>
+    @endscript
+    
+    <div x-data="reportsCharts"></div>
 </div>

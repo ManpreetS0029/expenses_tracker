@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
@@ -26,7 +27,7 @@ return new class extends Migration {
             $table->enum('type', ['Needs', 'Wants', 'Savings', 'Investments'])->default('Needs');
         });
 
-        // Delete all categories that were subcategories (had parent_id not null) if we could, 
+        // Delete all categories that were subcategories (had parent_id not null) if we could,
         // but since we dropped the column, they are just orphan categories now.
         // That is acceptable for a dev reset.
     }
