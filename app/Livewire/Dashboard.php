@@ -100,6 +100,10 @@ class Dashboard extends Component
         // Savings Rate
         $savingsRate = $monthlyIncome > 0 ? ($monthlySavings / $monthlyIncome) * 100 : 0;
 
+        // Money Left (Income - Expenses)
+        $moneyLeft = $monthlyIncome - $monthlyExpenses;
+        $moneyLeftPercent = $monthlyIncome > 0 ? ($moneyLeft / $monthlyIncome) * 100 : 0;
+
         // Expense by Classification (Doughnut Chart)
         $classificationData = Expense::where('user_id', $userId)
             ->whereBetween('date', [$startOfMonth, $endOfMonth])
@@ -287,6 +291,8 @@ class Dashboard extends Component
             'budgetUsedPercent' => (float) $budgetUsedPercent,
             'savingsRate' => (float) $savingsRate,
             'totalBudget' => (float) $totalBudget,
+            'moneyLeft' => (float) $moneyLeft,
+            'moneyLeftPercent' => (float) $moneyLeftPercent,
             'classifications' => $classifications,
             'trendLabels' => $trendLabels,
             'trendIncome' => $trendData['income'],

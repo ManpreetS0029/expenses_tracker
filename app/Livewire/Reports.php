@@ -4,6 +4,8 @@ namespace App\Livewire;
 
 use App\Models\Credit;
 use App\Models\Expense;
+use App\Models\MonthlyTarget;
+use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -131,7 +133,7 @@ class Reports extends Component
     public function mount()
     {
         $this->yearFilter = date('Y');
-        $this->monthFilter = '';
+        $this->monthFilter = date('n'); // Default to current month (1-12)
     }
 
     public function placeholder()
@@ -211,10 +213,41 @@ class Reports extends Component
             ->pluck('year');
         $years = $expenseYears->merge($creditYears)->unique()->sortDesc()->values();
 
+        // Calculate Money Left for the selected period
+        $monthlyTargetIncome = 0;
+        if ($this->yearFilter && $this->monthFilter) {
+            $selectedDate = Carbon::createFromDate($this->yearFilter, $this->monthFilter, 1);
+            $startOfMonth = $selectedDate->copy()->startOfMonth();
+            $endOfMonth = $selectedDate->copy()->endOfMonth();
+
+            $monthlyTarget = MonthlyTarget::where('user_id', $userId)
+                ->where('month', '>=', $startOfMonth->toDateString())
+                ->where('month', '<=', $endOfMonth->toDateString())
+                ->first();
+
+            $monthlyTargetIncome = $monthlyTarget ? (float) $monthlyTarget->total_income : 0;
+        }
+
+        $totalIncome = $monthlyTargetIncome + $totalCredit;
+        $moneyLeft = $totalIncome - $totalDebit;
+        $moneyLeftPercent = $totalIncome > 0 ? ($moneyLeft / $totalIncome) * 100 : 0;
+
+        // Get current period label
+        $periodLabel = '';
+        if ($this->yearFilter && $this->monthFilter) {
+            $periodLabel = Carbon::createFromDate($this->yearFilter, $this->monthFilter, 1)->format('F Y');
+        } elseif ($this->yearFilter) {
+            $periodLabel = $this->yearFilter;
+        }
+
         return view('livewire.reports', [
             'years' => $years,
             'totalDebit' => $totalDebit,
             'totalCredit' => $totalCredit,
+            'totalIncome' => $totalIncome,
+            'moneyLeft' => $moneyLeft,
+            'moneyLeftPercent' => $moneyLeftPercent,
+            'periodLabel' => $periodLabel,
             'needs' => $needs,
             'wants' => $wants,
             'savings' => $savings,

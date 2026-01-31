@@ -2,75 +2,45 @@
   "name": "Expenses Tracker",
   "short_name": "Expenses",
   "description": "Track your expenses and manage your finances efficiently",
-  "start_url": "/",
+  "start_url": "/dashboard",
+  "id": "/dashboard",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#18181b",
   "theme_color": "#6366f1",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "scope": "/",
+  "lang": "en",
   "icons": [
     {
-      "src": "/images/icons/icon-72x72.png",
-      "sizes": "72x72",
+      "src": "/images/icons/icon-192x192.png",
+      "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/images/icons/icon-96x96.png",
-      "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/images/icons/icon-128x128.png",
-      "sizes": "128x128",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/images/icons/icon-144x144.png",
-      "sizes": "144x144",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/images/icons/icon-152x152.png",
-      "sizes": "152x152",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/images/icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/images/icons/icon-384x384.png",
-      "sizes": "384x384",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     },
     {
       "src": "/images/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/images/screenshots/desktop.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide"
+      "purpose": "any"
     },
     {
-      "src": "/images/screenshots/mobile.png",
-      "sizes": "540x720",
+      "src": "/images/icons/icon-512x512.png",
+      "sizes": "512x512",
       "type": "image/png",
-      "form_factor": "narrow"
+      "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ],
   "categories": ["finance", "productivity"],
