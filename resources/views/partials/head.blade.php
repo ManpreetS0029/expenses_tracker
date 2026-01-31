@@ -14,8 +14,10 @@
 <meta name="description" content="Track your expenses and manage your finances efficiently">
 <link rel="manifest" href="/manifest.json">
 
-<!-- Favicon - Multiple formats for better compatibility -->
+<!-- Favicon - single PNG works on all devices (browsers scale as needed) -->
 <link rel="icon" type="image/png" href="{{ asset('fav.png') }}" sizes="32x32">
+<link rel="icon" type="image/png" href="{{ asset('fav.png') }}" sizes="192x192">
+<link rel="apple-touch-icon" href="{{ asset('fav.png') }}">
 
 
 <!-- Preload critical assets -->

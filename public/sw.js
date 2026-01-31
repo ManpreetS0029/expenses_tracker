@@ -4,11 +4,7 @@ const DYNAMIC_CACHE = 'expenses-dynamic-v3';
 
 // Static assets to cache on install
 const STATIC_ASSETS = [
-  '/favicon.ico',
-  '/favicon.svg',
-  '/apple-touch-icon.png',
-  '/images/icons/icon-192x192.png',
-  '/images/icons/icon-512x512.png',
+  '/fav.png',
   '/manifest.json',
   'https://cdn.jsdelivr.net/npm/chart.js',
   'https://fonts.bunny.net/css?family=instrument-sans:400,500,600'

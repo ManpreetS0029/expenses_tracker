@@ -12,30 +12,25 @@
   "scope": "/",
   "lang": "en",
   "icons": [
-   
     {
-      "src": "fav.png",
+      "src": "/fav.png",
       "sizes": "32x32",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/fav.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/fav.png",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     }
   ],
   "categories": ["finance", "productivity"],
-  "prefer_related_applications": false,
-  "screenshots": [
-    {
-      "src": "fav.png",
-      "sizes": "32x32",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Expenses Tracker Dashboard"
-    },
-    {
-      "src": "fav.png",
-      "sizes": "32x32",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Expenses Tracker Mobile"
-    }
-  ]
+  "prefer_related_applications": false
 }
