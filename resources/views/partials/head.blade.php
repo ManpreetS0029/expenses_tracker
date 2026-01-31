@@ -109,61 +109,88 @@
 
     // PWA Install Prompt - Enhanced for mobile
     let deferredPrompt;
-    let installButtonClickHandler = null;
+    let installButtonClickHandlers = [];
+    
+    function showInstallButtons() {
+        // Desktop sidebar button
+        const installBtn = document.getElementById('pwa-install-btn');
+        if (installBtn) {
+            installBtn.style.display = 'block';
+        }
+        // Mobile header button
+        const installBtnMobile = document.getElementById('pwa-install-btn-mobile');
+        if (installBtnMobile) {
+            installBtnMobile.style.display = 'flex';
+        }
+    }
+    
+    function hideInstallButtons() {
+        const installBtn = document.getElementById('pwa-install-btn');
+        const installBtnMobile = document.getElementById('pwa-install-btn-mobile');
+        if (installBtn) installBtn.style.display = 'none';
+        if (installBtnMobile) installBtnMobile.style.display = 'none';
+    }
+    
+    async function handleInstallClick() {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log('User response:', outcome);
+            if (outcome === 'accepted') {
+                hideInstallButtons();
+            }
+            deferredPrompt = null;
+        }
+    }
+    
+    function setupInstallButtons() {
+        // Remove old listeners
+        installButtonClickHandlers.forEach(({ element, handler }) => {
+            element.removeEventListener('click', handler);
+        });
+        installButtonClickHandlers = [];
+        
+        // Desktop button (has nested button element)
+        const installBtn = document.getElementById('pwa-install-btn');
+        if (installBtn) {
+            const button = installBtn.querySelector('button');
+            if (button) {
+                button.addEventListener('click', handleInstallClick);
+                installButtonClickHandlers.push({ element: button, handler: handleInstallClick });
+            }
+        }
+        
+        // Mobile button (is the button element itself)
+        const installBtnMobile = document.getElementById('pwa-install-btn-mobile');
+        if (installBtnMobile) {
+            installBtnMobile.addEventListener('click', handleInstallClick);
+            installButtonClickHandlers.push({ element: installBtnMobile, handler: handleInstallClick });
+        }
+    }
     
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
         console.log('Install prompt captured');
         
-        // Show install button with delay to ensure DOM is ready
+        // Show install buttons with delay to ensure DOM is ready
         setTimeout(() => {
-            const installBtn = document.getElementById('pwa-install-btn');
-            if (installBtn) {
-                installBtn.style.display = 'block';
-                const button = installBtn.querySelector('button');
-                if (button) {
-                    // Remove old listener if exists
-                    if (installButtonClickHandler) {
-                        button.removeEventListener('click', installButtonClickHandler);
-                    }
-                    // Add new listener
-                    installButtonClickHandler = async () => {
-                        if (deferredPrompt) {
-                            deferredPrompt.prompt();
-                            const { outcome } = await deferredPrompt.userChoice;
-                            console.log('User response:', outcome);
-                            if (outcome === 'accepted') {
-                                installBtn.style.display = 'none';
-                            }
-                            deferredPrompt = null;
-                        }
-                    };
-                    button.addEventListener('click', installButtonClickHandler);
-                }
-            }
+            showInstallButtons();
+            setupInstallButtons();
         }, 500);
     });
     
     // Check if app is already installed
     window.addEventListener('appinstalled', () => {
         console.log('PWA was installed');
-        const installBtn = document.getElementById('pwa-install-btn');
-        if (installBtn) {
-            installBtn.style.display = 'none';
-        }
+        hideInstallButtons();
         deferredPrompt = null;
     });
     
     // Check if running as installed app
     if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
         console.log('Running as installed PWA');
-        document.addEventListener('DOMContentLoaded', () => {
-            const installBtn = document.getElementById('pwa-install-btn');
-            if (installBtn) {
-                installBtn.style.display = 'none';
-            }
-        });
+        document.addEventListener('DOMContentLoaded', hideInstallButtons);
     }
     
     // Hide loader function

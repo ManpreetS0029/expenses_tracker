@@ -121,43 +121,73 @@ class Dashboard extends Component
             }
         }
 
-        // Income vs Expenses Trend (Last 6 Months)
-        $trendData = [];
+        // Income vs Expenses Trend (Last 6 Months) - Optimized with grouped queries
+        $trendData = ['income' => [], 'expenses' => []];
         $trendLabels = [];
+
+        // Calculate date range for last 6 months
+        $sixMonthsAgo = $now->copy()->subMonths(5)->startOfMonth();
+        $currentMonthEnd = $now->copy()->endOfMonth();
+
+        // Build labels array
         for ($i = 5; $i >= 0; $i--) {
-            $month = $now->copy()->subMonths($i);
-            $monthStart = $month->copy()->startOfMonth();
-            $monthEnd = $month->copy()->endOfMonth();
-            $trendLabels[] = $month->format('M Y');
-
-            $income = (float) MonthlyTarget::where('user_id', $userId)
-                ->whereBetween('month', [$monthStart, $monthEnd])
-                ->sum('total_income');
-            $income += (float) Credit::where('user_id', $userId)
-                ->whereBetween('date', [$monthStart, $monthEnd])
-                ->sum('amount');
-
-            $expenses = Expense::where('user_id', $userId)
-                ->whereBetween('date', [$monthStart, $monthEnd])
-                ->where('type', 'debit')
-                ->sum('amount');
-
-            $trendData['income'][] = (float) $income;
-            $trendData['expenses'][] = (float) $expenses;
+            $trendLabels[] = $now->copy()->subMonths($i)->format('M Y');
         }
 
-        // Daily Spending (Selected Month)
+        // Fetch all monthly target income in one query grouped by month
+        $monthlyTargetIncomes = MonthlyTarget::where('user_id', $userId)
+            ->whereBetween('month', [$sixMonthsAgo, $currentMonthEnd])
+            ->selectRaw("strftime('%Y-%m', month) as month_key, SUM(total_income) as total")
+            ->groupBy('month_key')
+            ->pluck('total', 'month_key')
+            ->toArray();
+
+        // Fetch all credits in one query grouped by month
+        $creditsByMonth = Credit::where('user_id', $userId)
+            ->whereBetween('date', [$sixMonthsAgo, $currentMonthEnd])
+            ->selectRaw("strftime('%Y-%m', date) as month_key, SUM(amount) as total")
+            ->groupBy('month_key')
+            ->pluck('total', 'month_key')
+            ->toArray();
+
+        // Fetch all expenses in one query grouped by month
+        $expensesByMonth = Expense::where('user_id', $userId)
+            ->whereBetween('date', [$sixMonthsAgo, $currentMonthEnd])
+            ->where('type', 'debit')
+            ->selectRaw("strftime('%Y-%m', date) as month_key, SUM(amount) as total")
+            ->groupBy('month_key')
+            ->pluck('total', 'month_key')
+            ->toArray();
+
+        // Build trend data arrays
+        for ($i = 5; $i >= 0; $i--) {
+            $monthKey = $now->copy()->subMonths($i)->format('Y-m');
+            $targetIncome = (float) ($monthlyTargetIncomes[$monthKey] ?? 0);
+            $credits = (float) ($creditsByMonth[$monthKey] ?? 0);
+            $expenses = (float) ($expensesByMonth[$monthKey] ?? 0);
+
+            $trendData['income'][] = $targetIncome + $credits;
+            $trendData['expenses'][] = $expenses;
+        }
+
+        // Daily Spending (Selected Month) - Optimized with single grouped query
         $dailyData = [];
         $dailyLabels = [];
         $daysToShow = $isCurrentMonth ? $daysElapsed : $now->daysInMonth;
+
+        // Fetch all daily expenses in one query
+        $dailyExpenses = Expense::where('user_id', $userId)
+            ->whereBetween('date', [$startOfMonth, $endOfMonth])
+            ->where('type', 'debit')
+            ->selectRaw("CAST(strftime('%d', date) AS INTEGER) as day, SUM(amount) as total")
+            ->groupBy('day')
+            ->pluck('total', 'day')
+            ->toArray();
+
+        // Build daily data arrays
         for ($day = 1; $day <= $daysToShow; $day++) {
-            $date = $now->copy()->day($day);
             $dailyLabels[] = $day;
-            $amount = Expense::where('user_id', $userId)
-                ->whereDate('date', $date->toDateString())
-                ->where('type', 'debit')
-                ->sum('amount');
-            $dailyData[] = (float) $amount;
+            $dailyData[] = (float) ($dailyExpenses[$day] ?? 0);
         }
 
         // Top Categories
@@ -184,16 +214,20 @@ class Dashboard extends Component
             return $category;
         }, $topCategories);
 
-        // Spending by Day of Week
+        // Spending by Day of Week - Optimized with database aggregation
         $weekdayData = [0, 0, 0, 0, 0, 0, 0];
-        $expenses = Expense::where('user_id', $userId)
+
+        // Use database aggregation instead of loading all records
+        $weekdayExpenses = Expense::where('user_id', $userId)
             ->whereBetween('date', [$startOfMonth, $endOfMonth])
             ->where('type', 'debit')
-            ->get();
+            ->selectRaw("CAST(strftime('%w', date) AS INTEGER) as day_of_week, SUM(amount) as total")
+            ->groupBy('day_of_week')
+            ->pluck('total', 'day_of_week')
+            ->toArray();
 
-        foreach ($expenses as $expense) {
-            $dayOfWeek = Carbon::parse($expense->date)->dayOfWeek;
-            $weekdayData[$dayOfWeek] += $expense->amount;
+        foreach ($weekdayExpenses as $dayOfWeek => $total) {
+            $weekdayData[$dayOfWeek] = (float) $total;
         }
 
         $weekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -268,16 +302,15 @@ class Dashboard extends Component
             ->take(8)
             ->values();
 
-        // Get available years for filter (from both expenses and credits)
-        $expenseYears = Expense::where('user_id', $userId)
-            ->selectRaw("strftime('%Y', date) as year")
-            ->distinct()
-            ->pluck('year');
-        $creditYears = Credit::where('user_id', $userId)
-            ->selectRaw("strftime('%Y', date) as year")
-            ->distinct()
-            ->pluck('year');
-        $availableYears = $expenseYears->merge($creditYears)->unique()->sortDesc()->values();
+        // Get available years for filter (from both expenses and credits) - Combined with UNION
+        $availableYears = collect(
+            \Illuminate\Support\Facades\DB::select("
+                SELECT DISTINCT strftime('%Y', date) as year FROM expenses WHERE user_id = ?
+                UNION
+                SELECT DISTINCT strftime('%Y', date) as year FROM credits WHERE user_id = ?
+                ORDER BY year DESC
+            ", [$userId, $userId])
+        )->pluck('year')->values();
 
         $this->dispatch('init-charts');
 

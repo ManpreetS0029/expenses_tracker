@@ -119,6 +119,13 @@
 
         <flux:spacer />
 
+        <!-- Mobile PWA Install Button -->
+        <button id="pwa-install-btn-mobile" style="display: none;" class="inline-flex items-center justify-center p-2 mr-2 bg-indigo-600 border border-transparent rounded-md text-white hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none transition ease-in-out duration-150" title="Install App">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+        </button>
+
         <flux:dropdown position="top" align="end">
             <flux:profile :initials="auth()->user()->initials()">
                 <x-slot:icon-trailing>
