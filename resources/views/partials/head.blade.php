@@ -12,15 +12,11 @@
 <meta name="theme-color" content="#6366f1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#18181b" media="(prefers-color-scheme: dark)">
 <meta name="description" content="Track your expenses and manage your finances efficiently">
-<link rel="manifest" href="{{ url('/manifest.json') }}" crossorigin="use-credentials">
+<link rel="manifest" href="/manifest.json">
 
 <!-- Favicon - Multiple formats for better compatibility -->
-<link rel="icon" type="image/x-icon" href="{{ url('/favicon.ico') }}">
-<link rel="icon" type="image/svg+xml" href="{{ url('/favicon.svg') }}">
-<link rel="shortcut icon" href="{{ url('/favicon.ico') }}">
-<link rel="apple-touch-icon" href="{{ url('/apple-touch-icon.png') }}">
-<link rel="apple-touch-icon" sizes="180x180" href="{{ url('/images/icons/icon-192x192.png') }}">
-<link rel="apple-touch-icon" sizes="192x192" href="{{ url('/images/icons/icon-192x192.png') }}">
+<link rel="icon" type="image/png" href="{{ asset('fav.png') }}" sizes="32x32">
+
 
 <!-- Preload critical assets -->
 <link rel="preconnect" href="https://fonts.bunny.net">
@@ -108,7 +104,8 @@
     }
 
     // PWA Install Prompt - Enhanced for mobile
-    let deferredPrompt;
+    // Make deferredPrompt globally accessible
+    window.deferredPrompt = null;
     let installButtonClickHandlers = [];
     
     function showInstallButtons() {
@@ -122,24 +119,36 @@
         if (installBtnMobile) {
             installBtnMobile.style.display = 'flex';
         }
+        // Hide the manual install banner if native prompt is available
+        const banner = document.getElementById('pwa-install-banner');
+        if (banner) {
+            banner.classList.add('hidden');
+        }
     }
     
     function hideInstallButtons() {
         const installBtn = document.getElementById('pwa-install-btn');
         const installBtnMobile = document.getElementById('pwa-install-btn-mobile');
+        const banner = document.getElementById('pwa-install-banner');
         if (installBtn) installBtn.style.display = 'none';
         if (installBtnMobile) installBtnMobile.style.display = 'none';
+        if (banner) banner.classList.add('hidden');
     }
     
     async function handleInstallClick() {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
+        if (window.deferredPrompt) {
+            window.deferredPrompt.prompt();
+            const { outcome } = await window.deferredPrompt.userChoice;
             console.log('User response:', outcome);
             if (outcome === 'accepted') {
                 hideInstallButtons();
             }
-            deferredPrompt = null;
+            window.deferredPrompt = null;
+        } else {
+            // Show manual install guide for browsers that don't support beforeinstallprompt
+            if (typeof showInstallGuideModal === 'function') {
+                showInstallGuideModal();
+            }
         }
     }
     
@@ -170,8 +179,8 @@
     
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
-        deferredPrompt = e;
-        console.log('Install prompt captured');
+        window.deferredPrompt = e;
+        console.log('Install prompt captured (native)');
         
         // Show install buttons with delay to ensure DOM is ready
         setTimeout(() => {
@@ -184,7 +193,8 @@
     window.addEventListener('appinstalled', () => {
         console.log('PWA was installed');
         hideInstallButtons();
-        deferredPrompt = null;
+        window.deferredPrompt = null;
+        localStorage.setItem('pwa-install-dismissed', 'true');
     });
     
     // Check if running as installed app

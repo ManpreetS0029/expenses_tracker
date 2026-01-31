@@ -188,6 +188,237 @@
 
     {{ $slot }}
 
+    <!-- Mobile PWA Install Guide Modal -->
+    <div id="pwa-install-guide-modal" class="fixed inset-0 z-50 hidden" x-data="{ open: false }" x-show="open" x-cloak>
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" @click="open = false; document.getElementById('pwa-install-guide-modal').classList.add('hidden')"></div>
+        <div class="fixed inset-x-4 bottom-4 sm:inset-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-md w-auto bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl p-6 z-10">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Install Expenses Tracker</h3>
+                <button @click="open = false; document.getElementById('pwa-install-guide-modal').classList.add('hidden')" class="p-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700">
+                    <svg class="w-5 h-5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Browser Detection and Instructions -->
+            <div id="install-instructions" class="space-y-4">
+                <!-- Chrome Instructions -->
+                <div id="chrome-instructions" class="hidden">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 bg-gradient-to-br from-red-500 via-yellow-500 to-green-500 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+                                <circle cx="12" cy="12" r="10"/>
+                            </svg>
+                        </div>
+                        <span class="font-medium text-zinc-900 dark:text-white">Chrome Browser</span>
+                    </div>
+                    <ol class="space-y-3 text-sm text-zinc-600 dark:text-zinc-300">
+                        <li class="flex items-start gap-3">
+                            <span class="flex-shrink-0 w-6 h-6 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                            <span>Tap the <strong class="text-zinc-900 dark:text-white">three dots menu</strong> (⋮) at the top right</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="flex-shrink-0 w-6 h-6 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                            <span>Look for <strong class="text-zinc-900 dark:text-white">"Install app"</strong> or <strong class="text-zinc-900 dark:text-white">"Add to Home screen"</strong></span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="flex-shrink-0 w-6 h-6 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                            <span>Tap <strong class="text-zinc-900 dark:text-white">"Install"</strong> to add the app</span>
+                        </li>
+                    </ol>
+                </div>
+
+                <!-- Samsung Internet Instructions -->
+                <div id="samsung-instructions" class="hidden">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                            </svg>
+                        </div>
+                        <span class="font-medium text-zinc-900 dark:text-white">Samsung Internet</span>
+                    </div>
+                    <ol class="space-y-3 text-sm text-zinc-600 dark:text-zinc-300">
+                        <li class="flex items-start gap-3">
+                            <span class="flex-shrink-0 w-6 h-6 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                            <span>Tap the <strong class="text-zinc-900 dark:text-white">menu button</strong> (☰) at the bottom</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="flex-shrink-0 w-6 h-6 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                            <span>Tap <strong class="text-zinc-900 dark:text-white">"Add page to"</strong></span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="flex-shrink-0 w-6 h-6 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                            <span>Select <strong class="text-zinc-900 dark:text-white">"Home screen"</strong></span>
+                        </li>
+                    </ol>
+                </div>
+
+                <!-- Safari iOS Instructions -->
+                <div id="safari-instructions" class="hidden">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.5 14.5l-7-3.5-3.5-7 7 3.5 3.5 7z"/>
+                            </svg>
+                        </div>
+                        <span class="font-medium text-zinc-900 dark:text-white">Safari (iPhone/iPad)</span>
+                    </div>
+                    <ol class="space-y-3 text-sm text-zinc-600 dark:text-zinc-300">
+                        <li class="flex items-start gap-3">
+                            <span class="flex-shrink-0 w-6 h-6 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                            <span>Tap the <strong class="text-zinc-900 dark:text-white">Share button</strong> (square with arrow) at the bottom</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="flex-shrink-0 w-6 h-6 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                            <span>Scroll down and tap <strong class="text-zinc-900 dark:text-white">"Add to Home Screen"</strong></span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="flex-shrink-0 w-6 h-6 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                            <span>Tap <strong class="text-zinc-900 dark:text-white">"Add"</strong> in the top right</span>
+                        </li>
+                    </ol>
+                </div>
+
+                <!-- Generic Instructions -->
+                <div id="generic-instructions" class="hidden">
+                    <p class="text-sm text-zinc-600 dark:text-zinc-300 mb-3">
+                        Use your browser's menu to add this app to your home screen:
+                    </p>
+                    <ul class="space-y-2 text-sm text-zinc-600 dark:text-zinc-300">
+                        <li class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            Look for "Install app" or "Add to Home screen"
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            Check the browser menu (three dots or lines)
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Info Note -->
+            <div class="mt-4 p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
+                <p class="text-xs text-indigo-700 dark:text-indigo-300">
+                    <strong>Note:</strong> For the best experience, make sure you're accessing this site over HTTPS.
+                </p>
+            </div>
+
+            <button @click="open = false; document.getElementById('pwa-install-guide-modal').classList.add('hidden'); localStorage.setItem('pwa-install-dismissed', 'true')" class="w-full mt-4 px-4 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors">
+                Got it!
+            </button>
+        </div>
+    </div>
+
+    <!-- Mobile Install Banner (shown on first visit on mobile) -->
+    <div id="pwa-install-banner" class="fixed bottom-4 left-4 right-4 z-40 hidden lg:hidden">
+        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl shadow-lg p-4 flex items-center gap-3">
+            <div class="flex-shrink-0 w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-white font-semibold text-sm">Install App</p>
+                <p class="text-indigo-100 text-xs">Add to home screen for quick access</p>
+            </div>
+            <div class="flex gap-2">
+                <button id="pwa-banner-install" class="px-3 py-1.5 bg-white text-indigo-600 text-sm font-medium rounded-lg hover:bg-indigo-50 transition-colors">
+                    Install
+                </button>
+                <button id="pwa-banner-dismiss" class="p-1.5 text-white/70 hover:text-white transition-colors">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Detect browser and show appropriate instructions
+        function detectBrowserAndShowInstructions() {
+            const ua = navigator.userAgent.toLowerCase();
+            const modal = document.getElementById('pwa-install-guide-modal');
+            
+            // Hide all instruction sets first
+            document.querySelectorAll('#install-instructions > div').forEach(el => el.classList.add('hidden'));
+            
+            if (ua.includes('samsungbrowser')) {
+                document.getElementById('samsung-instructions').classList.remove('hidden');
+            } else if (ua.includes('crios') || (ua.includes('chrome') && !ua.includes('edg'))) {
+                document.getElementById('chrome-instructions').classList.remove('hidden');
+            } else if (ua.includes('safari') && !ua.includes('chrome') && (ua.includes('iphone') || ua.includes('ipad'))) {
+                document.getElementById('safari-instructions').classList.remove('hidden');
+            } else {
+                document.getElementById('generic-instructions').classList.remove('hidden');
+            }
+        }
+
+        function showInstallGuideModal() {
+            const modal = document.getElementById('pwa-install-guide-modal');
+            detectBrowserAndShowInstructions();
+            modal.classList.remove('hidden');
+            modal.__x.$data.open = true;
+        }
+
+        function showInstallBanner() {
+            const banner = document.getElementById('pwa-install-banner');
+            const dismissed = localStorage.getItem('pwa-install-dismissed');
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            // Only show on mobile, if not dismissed, and not already installed
+            if (banner && isMobile && !dismissed && !isStandalone) {
+                setTimeout(() => {
+                    banner.classList.remove('hidden');
+                }, 2000);
+            }
+        }
+
+        // Setup banner buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const installBtn = document.getElementById('pwa-banner-install');
+            const dismissBtn = document.getElementById('pwa-banner-dismiss');
+            const banner = document.getElementById('pwa-install-banner');
+
+            if (installBtn) {
+                installBtn.addEventListener('click', function() {
+                    // If we have the deferred prompt, use it
+                    if (window.deferredPrompt) {
+                        window.deferredPrompt.prompt();
+                        window.deferredPrompt.userChoice.then(function(choiceResult) {
+                            if (choiceResult.outcome === 'accepted') {
+                                banner.classList.add('hidden');
+                            }
+                            window.deferredPrompt = null;
+                        });
+                    } else {
+                        // Otherwise show the manual install guide
+                        banner.classList.add('hidden');
+                        showInstallGuideModal();
+                    }
+                });
+            }
+
+            if (dismissBtn) {
+                dismissBtn.addEventListener('click', function() {
+                    banner.classList.add('hidden');
+                    localStorage.setItem('pwa-install-dismissed', 'true');
+                });
+            }
+
+            // Show banner on mobile
+            showInstallBanner();
+        });
+    </script>
+
     @fluxScripts
 </body>
 
