@@ -6,17 +6,10 @@
             <p class="text-xs sm:text-sm text-neutral-500 mt-1">{{ $currentMonth }} Overview</p>
         </div>
         <div class="flex gap-2 w-full sm:w-auto">
-            <select wire:model.live="yearFilter"
+            <select wire:model.live="periodFilter"
                 class="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg border-2 border-neutral-300 dark:border-neutral-600 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-neutral-900/90 dark:text-white">
-                <option value="">All Years</option>
-                @foreach($availableYears as $year)
-                    <option value="{{ $year }}">{{ $year }}</option>
-                @endforeach
-            </select>
-            <select wire:model.live="monthFilter"
-                class="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg border-2 border-neutral-300 dark:border-neutral-600 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-neutral-900/90 dark:text-white">
-                @foreach(range(1, 12) as $m)
-                    <option value="{{ str_pad($m, 2, '0', STR_PAD_LEFT) }}">{{ date('F', mktime(0, 0, 0, $m, 1)) }}</option>
+                @foreach($periodOptions as $value => $label)
+                    <option value="{{ $value }}">{{ $label }}</option>
                 @endforeach
             </select>
         </div>
@@ -254,7 +247,7 @@
         <!-- Daily Spending -->
         <div
             class="lg:col-span-2 bg-white dark:bg-neutral-800 p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-neutral-200 dark:border-neutral-700 shadow-sm">
-            <h3 class="text-sm sm:text-lg font-semibold text-neutral-900 dark:text-white mb-3 sm:mb-5">Daily Spending This Month</h3>
+            <h3 class="text-sm sm:text-lg font-semibold text-neutral-900 dark:text-white mb-3 sm:mb-5">{{ $isSingleMonth ? 'Daily Spending This Month' : 'Spending by Month' }}</h3>
             <div class="h-40 sm:h-64" wire:ignore>
                 <canvas id="dailyChart"></canvas>
             </div>

@@ -17,25 +17,23 @@
         </div>
 
         <!-- Filters -->
-        <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+        <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 flex-wrap">
             <input wire:model.live.debounce.300ms="search" type="text" placeholder="Search description..."
                 class="w-full sm:flex-1 sm:max-w-xs px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base rounded-lg border-2 border-gray-300 dark:border-zinc-600 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-900/90 dark:text-white placeholder-gray-400 dark:placeholder-gray-500">
 
-            <div class="grid grid-cols-2 sm:flex gap-2 sm:gap-3">
-                <select wire:model.live="yearFilter"
-                    class="w-full sm:w-auto px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base rounded-lg border-2 border-gray-300 dark:border-zinc-600 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-900/90 dark:text-white">
-                    @foreach($years as $year)
-                        <option value="{{ $year }}">{{ $year }}</option>
-                    @endforeach
-                </select>
+            <select wire:model.live="periodFilter"
+                class="w-full sm:w-auto px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base rounded-lg border-2 border-gray-300 dark:border-zinc-600 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-900/90 dark:text-white">
+                @foreach($periodOptions as $value => $label)
+                    <option value="{{ $value }}">{{ $label }}</option>
+                @endforeach
+            </select>
 
-                <select wire:model.live="monthFilter"
+            @if($periodFilter === 'custom')
+                <input wire:model.live="dateFrom" type="date" title="Date from"
                     class="w-full sm:w-auto px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base rounded-lg border-2 border-gray-300 dark:border-zinc-600 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-900/90 dark:text-white">
-                    @foreach(range(1, 12) as $m)
-                        <option value="{{ $m }}">{{ date('M', mktime(0, 0, 0, $m, 1)) }}</option>
-                    @endforeach
-                </select>
-            </div>
+                <input wire:model.live="dateTo" type="date" title="Date to"
+                    class="w-full sm:w-auto px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base rounded-lg border-2 border-gray-300 dark:border-zinc-600 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:bg-zinc-900/90 dark:text-white">
+            @endif
         </div>
     </div>
 

@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Category;
 use App\Models\Expense;
+use App\Support\DateRangeHelper;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Lazy;
@@ -51,7 +52,7 @@ class Expenses extends Component
         'date' => 'required|date',
         'amount' => 'required|numeric|min:0.01',
         'description' => 'nullable|string|max:255',
-        'classification' => 'nullable|in:Needs,Wants,Savings,Investments',
+        'classification' => 'nullable|in:Needs,Wants',
         'category_id' => 'required|exists:categories,id',
         'currency' => 'required|string|max:3',
         'currency_symbol' => 'required|string|max:10',
@@ -92,7 +93,9 @@ class Expenses extends Component
             $this->date = $expense->date->format('Y-m-d');
             $this->amount = $expense->amount;
             $this->description = $expense->description;
-            $this->classification = $expense->classification;
+            $this->classification = in_array($expense->classification, ['Needs', 'Wants'], true)
+                ? $expense->classification
+                : 'Needs';
             $this->category_id = $expense->category_id;
             $this->currency = $expense->currency ?? $user->currency;
             $this->currency_symbol = $expense->currency_symbol ?? $user->currency_symbol;
@@ -145,7 +148,13 @@ class Expenses extends Component
 
     public $categoryFilter = '';
 
-    public $monthFilter = '';
+    public $classificationFilter = '';
+
+    public $periodFilter = '';
+
+    public $dateFrom = '';
+
+    public $dateTo = '';
 
     public function updatedSearch()
     {
@@ -157,7 +166,22 @@ class Expenses extends Component
         $this->resetPage();
     }
 
-    public function updatedMonthFilter()
+    public function updatedPeriodFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedClassificationFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedDateFrom()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedDateTo()
     {
         $this->resetPage();
     }
@@ -178,8 +202,20 @@ class Expenses extends Component
             ->when($this->categoryFilter, function ($query) {
                 $query->where('category_id', $this->categoryFilter);
             })
-            ->when($this->monthFilter, function ($query) {
-                $query->whereMonth('date', $this->monthFilter);
+            ->when($this->classificationFilter, function ($query) {
+                $query->where('classification', $this->classificationFilter);
+            })
+            ->when($this->periodFilter && $this->periodFilter !== 'custom', function ($query) {
+                [$start, $end] = DateRangeHelper::rangeForPeriod($this->periodFilter);
+                $query->whereBetween('date', [$start, $end]);
+            })
+            ->when($this->periodFilter === 'custom', function ($query) {
+                if ($this->dateFrom) {
+                    $query->where('date', '>=', $this->dateFrom);
+                }
+                if ($this->dateTo) {
+                    $query->where('date', '<=', $this->dateTo);
+                }
             })
             ->orderBy('date', 'desc')
             ->orderBy('id', 'desc')
@@ -188,9 +224,12 @@ class Expenses extends Component
         $categories = Category::where('user_id', Auth::id())
             ->get();
 
+        $periodOptions = array_merge(['' => 'All time'], DateRangeHelper::periodLabels(), ['custom' => 'Custom date range']);
+
         return view('livewire.expenses', [
             'expenses' => $expenses,
             'categories' => $categories,
+            'periodOptions' => $periodOptions,
         ]);
     }
 }

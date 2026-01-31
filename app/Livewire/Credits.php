@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Category;
 use App\Models\Credit;
+use App\Support\DateRangeHelper;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Lazy;
@@ -58,7 +59,11 @@ class Credits extends Component
 
     public $categoryFilter = '';
 
-    public $monthFilter = '';
+    public $periodFilter = '';
+
+    public $dateFrom = '';
+
+    public $dateTo = '';
 
     public function mount()
     {
@@ -151,7 +156,17 @@ class Credits extends Component
         $this->resetPage();
     }
 
-    public function updatedMonthFilter()
+    public function updatedPeriodFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedDateFrom()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedDateTo()
     {
         $this->resetPage();
     }
@@ -171,8 +186,17 @@ class Credits extends Component
             ->when($this->categoryFilter, function ($query) {
                 $query->where('category_id', $this->categoryFilter);
             })
-            ->when($this->monthFilter, function ($query) {
-                $query->whereMonth('date', $this->monthFilter);
+            ->when($this->periodFilter && $this->periodFilter !== 'custom', function ($query) {
+                [$start, $end] = DateRangeHelper::rangeForPeriod($this->periodFilter);
+                $query->whereBetween('date', [$start, $end]);
+            })
+            ->when($this->periodFilter === 'custom', function ($query) {
+                if ($this->dateFrom) {
+                    $query->where('date', '>=', $this->dateFrom);
+                }
+                if ($this->dateTo) {
+                    $query->where('date', '<=', $this->dateTo);
+                }
             })
             ->orderBy('date', 'desc')
             ->orderBy('id', 'desc')
@@ -180,9 +204,12 @@ class Credits extends Component
 
         $categories = Category::where('user_id', Auth::id())->get();
 
+        $periodOptions = array_merge(['' => 'All time'], DateRangeHelper::periodLabels(), ['custom' => 'Custom date range']);
+
         return view('livewire.credits', [
             'credits' => $credits,
             'categories' => $categories,
+            'periodOptions' => $periodOptions,
         ]);
     }
 }

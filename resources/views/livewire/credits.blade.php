@@ -16,7 +16,7 @@
     <div class="bg-white dark:bg-zinc-800/90 overflow-hidden shadow-sm dark:shadow-lg rounded-xl border border-gray-200 dark:border-zinc-700">
         {{-- Filters --}}
         <div class="p-3 sm:p-4 border-b border-gray-200 dark:border-zinc-700">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 sm:gap-4">
                 <div>
                     <input wire:model.live.debounce.300ms="search" type="text" placeholder="Search description..."
                         class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-zinc-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:bg-zinc-900 dark:text-white placeholder-gray-400">
@@ -31,14 +31,23 @@
                     </select>
                 </div>
                 <div>
-                    <select wire:model.live="monthFilter"
+                    <select wire:model.live="periodFilter"
                         class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-zinc-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:bg-zinc-900 dark:text-white">
-                        <option value="">All Months</option>
-                        @foreach(range(1, 12) as $m)
-                            <option value="{{ $m }}">{{ date('F', mktime(0, 0, 0, $m, 1)) }}</option>
+                        @foreach($periodOptions as $value => $label)
+                            <option value="{{ $value }}">{{ $label }}</option>
                         @endforeach
                     </select>
                 </div>
+                @if($periodFilter === 'custom')
+                    <div>
+                        <input wire:model.live="dateFrom" type="date" title="Date from"
+                            class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-zinc-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:bg-zinc-900 dark:text-white">
+                    </div>
+                    <div>
+                        <input wire:model.live="dateTo" type="date" title="Date to"
+                            class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-zinc-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:bg-zinc-900 dark:text-white">
+                    </div>
+                @endif
             </div>
         </div>
 

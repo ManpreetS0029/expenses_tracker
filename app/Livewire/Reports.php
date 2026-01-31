@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Credit;
 use App\Models\Expense;
 use App\Models\MonthlyTarget;
+use App\Support\DateRangeHelper;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -20,21 +21,28 @@ class Reports extends Component
 
     public $search = '';
 
-    public $yearFilter = '';
+    public $periodFilter = 'this_month';
 
-    public $monthFilter = '';
+    public $dateFrom = '';
+
+    public $dateTo = '';
 
     public function updatedSearch()
     {
         $this->resetPage();
     }
 
-    public function updatedYearFilter()
+    public function updatedPeriodFilter()
     {
         $this->resetPage();
     }
 
-    public function updatedMonthFilter()
+    public function updatedDateFrom()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedDateTo()
     {
         $this->resetPage();
     }
@@ -54,12 +62,30 @@ class Reports extends Component
 
     protected function applyDateFilters($query): void
     {
-        if ($this->yearFilter) {
-            $query->whereYear('date', $this->yearFilter);
+        if ($this->periodFilter && $this->periodFilter !== 'custom') {
+            [$start, $end] = DateRangeHelper::rangeForPeriod($this->periodFilter);
+            $query->whereBetween('date', [$start, $end]);
         }
-        if ($this->monthFilter) {
-            $query->whereMonth('date', $this->monthFilter);
+        if ($this->periodFilter === 'custom') {
+            if ($this->dateFrom) {
+                $query->where('date', '>=', $this->dateFrom);
+            }
+            if ($this->dateTo) {
+                $query->where('date', '<=', $this->dateTo);
+            }
         }
+    }
+
+    protected function getPeriodStartEnd(): ?array
+    {
+        if ($this->periodFilter && $this->periodFilter !== 'custom') {
+            return DateRangeHelper::rangeForPeriod($this->periodFilter);
+        }
+        if ($this->periodFilter === 'custom' && $this->dateFrom && $this->dateTo) {
+            return [Carbon::parse($this->dateFrom)->startOfDay(), Carbon::parse($this->dateTo)->endOfDay()];
+        }
+
+        return null;
     }
 
     public function exportToCsv()
@@ -132,8 +158,7 @@ class Reports extends Component
 
     public function mount()
     {
-        $this->yearFilter = date('Y');
-        $this->monthFilter = date('n'); // Default to current month (1-12)
+        $this->periodFilter = 'this_month';
     }
 
     public function placeholder()
@@ -203,45 +228,29 @@ class Reports extends Component
             ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath(), 'query' => request()->query()]
         );
 
-        $expenseYears = Expense::where('user_id', $userId)
-            ->selectRaw("strftime('%Y', date) as year")
-            ->distinct()
-            ->pluck('year');
-        $creditYears = Credit::where('user_id', $userId)
-            ->selectRaw("strftime('%Y', date) as year")
-            ->distinct()
-            ->pluck('year');
-        $years = $expenseYears->merge($creditYears)->unique()->sortDesc()->values();
-
-        // Calculate Money Left for the selected period
+        // Calculate Money Left for the selected period (monthly targets in range + credits)
         $monthlyTargetIncome = 0;
-        if ($this->yearFilter && $this->monthFilter) {
-            $selectedDate = Carbon::createFromDate($this->yearFilter, $this->monthFilter, 1);
-            $startOfMonth = $selectedDate->copy()->startOfMonth();
-            $endOfMonth = $selectedDate->copy()->endOfMonth();
-
-            $monthlyTarget = MonthlyTarget::where('user_id', $userId)
-                ->where('month', '>=', $startOfMonth->toDateString())
-                ->where('month', '<=', $endOfMonth->toDateString())
-                ->first();
-
-            $monthlyTargetIncome = $monthlyTarget ? (float) $monthlyTarget->total_income : 0;
+        $range = $this->getPeriodStartEnd();
+        if ($range) {
+            [$startOfPeriod, $endOfPeriod] = $range;
+            $monthlyTargetIncome = (float) MonthlyTarget::where('user_id', $userId)
+                ->where('month', '>=', $startOfPeriod->toDateString())
+                ->where('month', '<=', $endOfPeriod->toDateString())
+                ->sum('total_income');
         }
 
         $totalIncome = $monthlyTargetIncome + $totalCredit;
         $moneyLeft = $totalIncome - $totalDebit;
         $moneyLeftPercent = $totalIncome > 0 ? ($moneyLeft / $totalIncome) * 100 : 0;
 
-        // Get current period label
-        $periodLabel = '';
-        if ($this->yearFilter && $this->monthFilter) {
-            $periodLabel = Carbon::createFromDate($this->yearFilter, $this->monthFilter, 1)->format('F Y');
-        } elseif ($this->yearFilter) {
-            $periodLabel = $this->yearFilter;
-        }
+        $periodLabel = $this->periodFilter === 'custom'
+            ? ($this->dateFrom && $this->dateTo ? $this->dateFrom.' to '.$this->dateTo : 'Custom')
+            : (DateRangeHelper::periodLabels()[$this->periodFilter] ?? $this->periodFilter);
+
+        $periodOptions = array_merge(['' => 'All time'], DateRangeHelper::periodLabels(), ['custom' => 'Custom date range']);
 
         return view('livewire.reports', [
-            'years' => $years,
+            'periodOptions' => $periodOptions,
             'totalDebit' => $totalDebit,
             'totalCredit' => $totalCredit,
             'totalIncome' => $totalIncome,
