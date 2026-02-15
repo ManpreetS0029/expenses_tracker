@@ -1,27 +1,24 @@
 <?php
 
+use App\Http\Controllers\Settings\CurrencyController;
+use App\Http\Controllers\Settings\DeleteUserController;
 use Illuminate\Support\Facades\Route;
-use Laravel\Fortify\Features;
 
 Route::middleware(['auth'])->group(function () {
     Route::redirect('settings', 'settings/profile');
 
-    Route::livewire('settings/profile', 'pages::settings.profile')->name('profile.edit');
+    Route::get('settings/profile', function () {
+        return view('pages.settings.profile');
+    })->name('profile.edit');
+
+    Route::delete('/user', [DeleteUserController::class, 'destroy'])->name('user.destroy');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::livewire('settings/password', 'pages::settings.password')->name('user-password.edit');
-    Route::livewire('settings/appearance', 'pages::settings.appearance')->name('appearance.edit');
-    Route::livewire('settings/currency', 'settings.currency-settings')->name('currency.edit');
+    Route::get('settings/password', function () {
+        return view('pages.settings.password');
+    })->name('user-password.edit');
 
-    Route::livewire('settings/two-factor', 'pages::settings.two-factor')
-        ->middleware(
-            when(
-                Features::canManageTwoFactorAuthentication()
-                && Features::optionEnabled(Features::twoFactorAuthentication(), 'confirmPassword'),
-                ['password.confirm'],
-                [],
-            ),
-        )
-        ->name('two-factor.show');
+    Route::get('settings/currency', [CurrencyController::class, 'edit'])->name('currency.edit');
+    Route::post('settings/currency', [CurrencyController::class, 'update'])->name('currency.update');
 });

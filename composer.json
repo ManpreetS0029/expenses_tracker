@@ -1,8 +1,8 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/livewire-starter-kit",
+    "name": "laravel/expenses-tracker",
     "type": "project",
-    "description": "The official Laravel starter kit for Livewire.",
+    "description": "Track expenses and manage finances.",
     "keywords": [
         "laravel",
         "framework"
@@ -12,9 +12,7 @@
         "php": "^8.2",
         "laravel/fortify": "^1.30",
         "laravel/framework": "^12.0",
-        "laravel/tinker": "^2.10.1",
-        "livewire/flux": "^2.9.0",
-        "livewire/livewire": "^4.0"
+        "laravel/tinker": "^2.10.1"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
