@@ -64,12 +64,14 @@ class ReportController extends Controller
             ->select(
                 'credits.date as date',
                 'credits.description as description',
-                'categories.name as category_name',
+                'categories.name as category_name'
+            )
+            ->selectRaw('NULL as classification')
+            ->addSelect(
                 'credits.amount as amount',
                 'credits.currency_symbol as currency_symbol',
                 'credits.created_at as created_at'
             )
-            ->selectRaw('NULL as classification')
             ->selectRaw("'credit' as type");
         $this->applyDateFilters($creditUnionQuery, $periodFilter, $dateFrom, $dateTo);
         $this->applySearchToJoinedQuery($creditUnionQuery, 'credits.description', $search);
@@ -95,7 +97,7 @@ class ReportController extends Controller
         $moneyLeftPercent = $totalIncome > 0 ? ($moneyLeft / $totalIncome) * 100 : 0;
 
         $periodLabel = $periodFilter === 'custom'
-            ? ($dateFrom && $dateTo ? $dateFrom.' to '.$dateTo : 'Custom')
+            ? ($dateFrom && $dateTo ? $dateFrom . ' to ' . $dateTo : 'Custom')
             : (DateRangeHelper::periodLabels()[$periodFilter] ?? $periodFilter);
 
         $periodOptions = array_merge(['' => 'All time'], DateRangeHelper::periodLabels(), ['custom' => 'Custom date range']);
@@ -167,7 +169,7 @@ class ReportController extends Controller
         }
         $rows = $rows->sortByDesc('sort_at')->values();
 
-        $filename = 'transactions_report_'.date('Y-m-d_His').'.csv';
+        $filename = 'transactions_report_' . date('Y-m-d_His') . '.csv';
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"$filename\"",
@@ -175,7 +177,7 @@ class ReportController extends Controller
 
         $callback = function () use ($rows) {
             $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
             fputcsv($file, ['Date', 'Description', 'Category', 'Classification', 'Type', 'Amount']);
 
             foreach ($rows as $r) {
@@ -185,7 +187,7 @@ class ReportController extends Controller
                     $r->category,
                     $r->classification,
                     $r->type,
-                    $r->symbol.number_format($r->amount, 2, '.', ''),
+                    $r->symbol . number_format($r->amount, 2, '.', ''),
                 ]);
             }
             fclose($file);
@@ -203,9 +205,9 @@ class ReportController extends Controller
             return;
         }
         $query->where(function ($q) use ($search) {
-            $q->where('description', 'like', '%'.$search.'%')
+            $q->where('description', 'like', '%' . $search . '%')
                 ->orWhereHas('category', function ($catQ) use ($search) {
-                    $catQ->where('name', 'like', '%'.$search.'%');
+                    $catQ->where('name', 'like', '%' . $search . '%');
                 });
         });
     }
@@ -252,7 +254,7 @@ class ReportController extends Controller
         if ($search === '') {
             return;
         }
-        $search = '%'.$search.'%';
+        $search = '%' . $search . '%';
         $query->where(function ($q) use ($descriptionColumn, $search) {
             $q->where($descriptionColumn, 'like', $search)
                 ->orWhere('categories.name', 'like', $search);
