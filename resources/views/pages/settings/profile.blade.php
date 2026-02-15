@@ -42,7 +42,7 @@
                     <p class="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">Once deleted, all your data will be
                         permanently removed.</p>
                     <form method="POST" action="{{ route('user.destroy') }}" class="mt-4 space-y-4"
-                        onsubmit="return confirm('Are you sure? This cannot be undone.');">
+                        onsubmit="confirmSubmit(event, 'Are you sure? This cannot be undone.');">
                         @csrf
                         @method('DELETE')
                         <div>

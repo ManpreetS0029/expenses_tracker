@@ -29,14 +29,7 @@
 
             {{-- Password --}}
             <div>
-                <div class="flex items-center justify-between mb-1.5">
-                    <label for="password" class="block text-sm font-medium text-zinc-300">Password</label>
-                    @if (Route::has('password.request'))
-                        <a href="{{ route('password.request') }}"
-                            class="text-xs font-medium text-violet-400 hover:text-violet-300 transition-colors">Forgot
-                            password?</a>
-                    @endif
-                </div>
+                <label for="password" class="block text-sm font-medium text-zinc-300 mb-1.5">Password</label>
                 <input id="password" name="password" type="password" required autocomplete="current-password"
                     placeholder="••••••••" class="input-field" />
                 @error('password')

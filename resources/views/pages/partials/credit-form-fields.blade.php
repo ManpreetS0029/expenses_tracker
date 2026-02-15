@@ -8,12 +8,12 @@
         <div>
             <label for="date" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Date</label>
             <input type="date" name="date" value="{{ $credit ? $credit->date->format('Y-m-d') : date('Y-m-d') }}"
-                required class="input-field">
+                class="input-field">
             @error('date')<span class="text-red-500 text-xs">{{ $message }}</span>@enderror
         </div>
         <div>
             <label for="amount" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Amount</label>
-            <input type="number" name="amount" step="0.01" value="{{ old('amount', $credit?->amount) }}" required
+            <input type="number" name="amount" step="0.01" value="{{ old('amount', $credit?->amount) }}"
                 class="input-field">
             @error('amount')<span class="text-red-500 text-xs">{{ $message }}</span>@enderror
         </div>
@@ -28,7 +28,7 @@
         <div>
             <label for="category_id"
                 class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Category</label>
-            <select name="category_id" required class="input-field">
+            <select name="category_id" class="input-field">
                 <option value="">Select</option>
                 @foreach($categories as $cat)
                     <option value="{{ $cat->id }}" {{ old('category_id', $credit?->category_id) == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
@@ -48,5 +48,8 @@
                 value="{{ old('currency_symbol', $credit?->currency_symbol ?? $defaultSymbol) }}">
         </div>
     </div>
-    <button type="submit" class="btn-primary w-full sm:w-auto">Save</button>
+    <div class="flex items-center gap-3 pt-1">
+        <button type="submit" class="btn-success">Save</button>
+        <a href="{{ $cancelUrl ?? route('credits') }}" class="btn-secondary">Cancel</a>
+    </div>
 </div>

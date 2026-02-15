@@ -10,7 +10,7 @@
                 <p class="text-sm text-zinc-500 dark:text-zinc-400">Manage expense and income categories</p>
             </div>
             <button type="button"
-                onclick="document.getElementById('category-modal').classList.remove('hidden'); document.getElementById('category-form').reset(); document.getElementById('method-field').innerHTML=''; document.getElementById('category-form').action='{{ route('categories.store') }}'; document.getElementById('modal-title').textContent='Add Category';"
+                onclick="document.getElementById('category-modal').classList.remove('hidden'); document.getElementById('category-form').reset(); document.querySelectorAll('.js-error').forEach(e => e.remove()); document.getElementById('method-field').innerHTML=''; document.getElementById('category-form').action='{{ route('categories.store') }}'; document.getElementById('modal-title').textContent='Add Category';"
                 class="btn-primary">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 sm:mr-1.5" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
@@ -45,7 +45,7 @@
                         <div class="mb-4">
                             <label for="category-name"
                                 class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Name</label>
-                            <input type="text" name="name" id="category-name" required placeholder="e.g. Groceries"
+                            <input type="text" name="name" id="category-name" placeholder="e.g. Groceries"
                                 value="{{ old('name') }}" class="input-field">
                             @error('name')<span class="text-red-500 text-xs mt-1">{{ $message }}</span>@enderror
                         </div>
@@ -53,7 +53,7 @@
                             <button type="button"
                                 onclick="document.getElementById('category-modal').classList.add('hidden')"
                                 class="btn-secondary">Cancel</button>
-                            <button type="submit" class="btn-primary">Save</button>
+                            <button type="submit" class="btn-success">Save</button>
                         </div>
                     </form>
                 </div>
@@ -65,6 +65,7 @@
         <script>
             function openEditCategory(id, name) {
                 document.getElementById('category-modal').classList.remove('hidden');
+                document.querySelectorAll('.js-error').forEach(e => e.remove());
                 document.getElementById('modal-title').textContent = 'Edit Category';
                 document.getElementById('method-field').innerHTML = '<input type="hidden" name="_method" value="PUT">';
                 document.getElementById('category-form').action = '{{ url('categories') }}/' + id;
@@ -124,6 +125,30 @@
 
                 form.addEventListener('submit', function (e) { e.preventDefault(); fetchData(); });
                 bindPaginationLinks();
+            })();
+            (function () {
+                var modalForm = document.querySelector('#category-form');
+                if (modalForm) {
+                    modalForm.addEventListener('submit', function (e) {
+                        var valid = true;
+                        modalForm.querySelectorAll('.js-error').forEach(function (el) { el.remove(); });
+
+                        var name = modalForm.querySelector('[name="name"]');
+                        if (name && !name.value.trim()) {
+                            showError(name, 'Category name is required');
+                            valid = false;
+                        }
+
+                        if (!valid) e.preventDefault();
+                    });
+                }
+
+                function showError(input, message) {
+                    var error = document.createElement('span');
+                    error.className = 'text-red-500 text-xs mt-1 block js-error';
+                    error.innerText = message;
+                    input.parentNode.appendChild(error);
+                }
             })();
         </script>
     @endpush

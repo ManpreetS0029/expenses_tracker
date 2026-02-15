@@ -14,7 +14,7 @@
         <label for="month_year" class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Month &
             Year</label>
         <input type="month" name="month_year" id="month_year"
-            value="{{ $target ? $target->month->format('Y-m') : date('Y-m') }}" required class="input-field">
+            value="{{ $target ? $target->month->format('Y-m') : date('Y-m') }}" class="input-field">
         @error('month_year')<span class="text-red-500 text-xs">{{ $message }}</span>@enderror
     </div>
     <div>
@@ -47,5 +47,8 @@
                 value="{{ old('investments', $investments) }}" class="input-field">
         </div>
     </div>
-    <button type="submit" class="btn-primary w-full sm:w-auto">Save</button>
+    <div class="flex items-center gap-3 pt-1">
+        <button type="submit" class="btn-success">Save</button>
+        <a href="{{ $cancelUrl ?? route('monthly-targets') }}" class="btn-secondary">Cancel</a>
+    </div>
 </div>

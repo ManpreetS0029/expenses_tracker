@@ -26,7 +26,8 @@
                     <select name="year" class="input-field" data-auto-filter>
                         <option value="">All Years</option>
                         @foreach($availableYears as $y)<option value="{{ $y }}" {{ $yearFilter === $y ? 'selected' : '' }}>
-                        {{ $y }}</option>@endforeach
+                            {{ $y }}
+                        </option>@endforeach
                     </select>
                 </div>
             </form>
@@ -43,7 +44,8 @@
             <div class="flex min-h-full items-center justify-center p-4">
                 <div class="card relative p-5 shadow-xl sm:max-w-lg w-full">
                     <h3 class="text-sm font-semibold text-zinc-900 dark:text-zinc-50 mb-4">
-                        {{ request('edit') ? 'Edit Target' : 'Add Target' }}</h3>
+                        {{ request('edit') ? 'Edit Target' : 'Add Target' }}
+                    </h3>
                     @if(request('edit') && $editingTarget)
                         <form method="POST" action="{{ route('monthly-targets.update', $editingTarget) }}">
                             @csrf @method('PUT')
@@ -55,8 +57,6 @@
                             @include('pages.partials.monthly-target-form-fields', ['target' => null])
                         </form>
                     @endif
-                    <a href="{{ route('monthly-targets') }}"
-                        class="mt-3 inline-block text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">Cancel</a>
                 </div>
             </div>
         </div>
@@ -118,6 +118,43 @@
 
                 form.addEventListener('submit', function (e) { e.preventDefault(); fetchData(); });
                 bindPaginationLinks();
+            })();
+            (function() {
+                var modalForm = document.querySelector('#target-modal form');
+                if (modalForm) {
+                    modalForm.addEventListener('submit', function(e) {
+                        var valid = true;
+                        modalForm.querySelectorAll('.js-error').forEach(function(el) { el.remove(); });
+                        
+                        var month = modalForm.querySelector('[name="month_year"]');
+                        if (month && !month.value.trim()) {
+                            showError(month, 'Month is required');
+                            valid = false;
+                        }
+
+                        ['total_income', 'needs', 'wants', 'savings', 'investments'].forEach(function(name) {
+                            var input = modalForm.querySelector('[name="' + name + '"]');
+                            if (input) {
+                                if (!input.value.trim()) {
+                                    showError(input, 'Required');
+                                    valid = false;
+                                } else if (parseFloat(input.value) < 0) {
+                                    showError(input, 'Must be positive');
+                                    valid = false;
+                                }
+                            }
+                        });
+
+                        if (!valid) e.preventDefault();
+                    });
+                }
+
+                function showError(input, message) {
+                    var error = document.createElement('span');
+                    error.className = 'text-red-500 text-xs mt-1 block js-error';
+                    error.innerText = message;
+                    input.parentNode.appendChild(error);
+                }
             })();
         </script>
     @endpush

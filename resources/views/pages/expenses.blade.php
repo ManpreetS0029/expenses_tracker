@@ -83,8 +83,6 @@
                             @include('pages.partials.expense-form-fields', ['expense' => null])
                         </form>
                     @endif
-                    <a href="{{ route('expenses') }}"
-                        class="mt-3 inline-block text-sm text-zinc-500 hover:text-zinc-100 transition-colors">Cancel</a>
                 </div>
             </div>
         </div>
@@ -166,6 +164,47 @@
 
                 form.addEventListener('submit', function (e) { e.preventDefault(); fetchData(); });
                 bindPaginationLinks();
+            })();
+            (function() {
+                var modalForm = document.querySelector('#expense-modal form');
+                if (modalForm) {
+                    modalForm.addEventListener('submit', function(e) {
+                        var valid = true;
+                        modalForm.querySelectorAll('.js-error').forEach(function(el) { el.remove(); });
+                        
+                        var date = modalForm.querySelector('[name="date"]');
+                        if (date && !date.value.trim()) {
+                            showError(date, 'Date is required');
+                            valid = false;
+                        }
+
+                        var amount = modalForm.querySelector('[name="amount"]');
+                        if (amount) {
+                            if (!amount.value.trim()) {
+                                showError(amount, 'Amount is required');
+                                valid = false;
+                            } else if (parseFloat(amount.value) <= 0) {
+                                showError(amount, 'Amount must be greater than 0');
+                                valid = false;
+                            }
+                        }
+
+                        var category = modalForm.querySelector('[name="category_id"]');
+                        if (category && !category.value) {
+                            showError(category, 'Category is required');
+                            valid = false;
+                        }
+
+                        if (!valid) e.preventDefault();
+                    });
+                }
+
+                function showError(input, message) {
+                    var error = document.createElement('span');
+                    error.className = 'text-red-500 text-xs mt-1 block js-error';
+                    error.innerText = message;
+                    input.parentNode.appendChild(error);
+                }
             })();
         </script>
     @endpush
